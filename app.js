@@ -141,7 +141,7 @@ function navigateToView(viewId) {
   // Hide all view panels across systems
   $$('.app-view').forEach(v => v.classList.remove('active'));
   
-  // Toggle layout structural classes for desktop sidebar & mobile navigation bars simultaneously
+  // Toggle active framework classes for layout bars simultaneously
   $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === viewId));
   $$('.mobile-nav-item').forEach(m => m.classList.toggle('active', m.dataset.view === viewId));
   
@@ -402,13 +402,14 @@ function populateTxModalAccountSelection(phone) {
 // ============================================================================
 
 function bindApplicationEvents() {
-  // --- NAVIGATION ROUTING DISPATCHER WITH DEEP CLICK CAPTURE ---
+  // --- NAVIGATION DEEP DELEGATION ENGINE ---
   document.body.addEventListener('click', (e) => {
     const navBtn = e.target.closest('.nav-item, .mobile-nav-item');
     if (navBtn) {
+      e.preventDefault();
+      e.stopPropagation();
       const targetView = navBtn.getAttribute('data-view');
       if (targetView) {
-        e.preventDefault();
         navigateToView(targetView);
       }
     }
