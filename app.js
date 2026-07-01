@@ -145,11 +145,7 @@ function navigateToView(viewId) {
   $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === viewId));
   $$('.mobile-nav-item').forEach(m => m.classList.toggle('active', m.dataset.view === viewId));
   
-  // Safeguard view activation selector strings
-  let finalViewId = viewId;
-  if (viewId === 'ledger') finalViewId = 'ledger';
-  
-  const targetView = $(`#view-${finalViewId}`);
+  const targetView = $(`#view-${viewId}`);
   if (targetView) targetView.classList.add('active');
   
   window.scrollTo(0, 0);
