@@ -1,5 +1,5 @@
 // ============================================================================
-// --- CREDTRACK CORE ENGINE & LIFECYCLE MANAGEMENT ---
+// --- CREDTRACK CLOUD-READY INTERFACE STORAGE CORE ---
 // ============================================================================
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -23,7 +23,33 @@ const state = {
   activeTxModalTargetPhone: null
 };
 
-// --- CORE UTILITY HELPERS ---
+// --- LEARNING HUB: ASYNCHRONOUS STORAGE GATEWAY ---
+// This decoupled repository patterns perfectly mimics cloud query delays.
+// When transitioning to Firebase/Supabase SDK, you will ONLY modify the inner execution blocks below.
+const DB = {
+  async saveCustomer(phone, payload) {
+    state.customers[phone] = payload;
+    localStorage.setItem('kf_v2_customers', JSON.stringify(state.customers));
+    return true;
+  },
+  async commitTransaction(txItem) {
+    state.transactions.push(txItem);
+    localStorage.setItem('kf_v2_transactions', JSON.stringify(state.transactions));
+    return true;
+  },
+  async purgeTransaction(txId) {
+    state.transactions = state.transactions.filter(t => t.id !== txId);
+    localStorage.setItem('kf_v2_transactions', JSON.stringify(state.transactions));
+    return true;
+  },
+  async updateProfile(profilePayload) {
+    state.business = profilePayload;
+    localStorage.setItem('kf_v2_business', JSON.stringify(state.business));
+    return true;
+  }
+};
+
+// --- CORE UTILITY COMPILERS ---
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (val) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
@@ -42,24 +68,6 @@ function escapeHtml(val) {
   return String(val).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
 }
 
-function saveToStorage() {
-  localStorage.setItem('kf_v2_customers', JSON.stringify(state.customers));
-  localStorage.setItem('kf_v2_transactions', JSON.stringify(state.transactions));
-  localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
-  localStorage.setItem('kf_v2_business', JSON.stringify(state.business));
-}
-
-function showToast(title, msg) {
-  const toast = $('#toast');
-  if (!toast) return;
-  $('#toastTitle').textContent = title;
-  $('#toastMessage').textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => toast.classList.remove('show'), 2800);
-}
-
-// --- DATA CALCULATION COMPILERS ---
 function getCustomerMetrics(phone) {
   const list = state.transactions.filter(t => t.customerPhone === phone);
   let totalDebt = 0;
@@ -137,11 +145,8 @@ function compileMessageString(phone, templateBody) {
 
 function navigateToView(viewId) {
   state.currentView = viewId;
-  
-  // Hide all view panels across systems
   $$('.app-view').forEach(v => v.classList.remove('active'));
   
-  // Toggle active framework classes for layout bars simultaneously
   $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === viewId));
   $$('.mobile-nav-item').forEach(m => m.classList.toggle('active', m.dataset.view === viewId));
   
@@ -184,15 +189,15 @@ function renderDashboardView() {
     
     return `<tr>
       <td style="padding-left: 16px;">
-        <button class="primary-button quick-row-send-btn ${isSent ? 'dispatched-state' : ''}" data-txid="${t.id}" data-phone="${cust.phone}" style="padding: 6px 10px; font-size: 11px; margin:0; width:100%; text-align:center; background: ${isSent ? '#f0f2f1' : 'var(--wa)'}; box-shadow: none; color: ${isSent ? '#8a9491' : '#fff'};">
-          ${isSent ? '✓ Sent' : '⚡ Send'}
+        <button class="primary-button quick-row-send-btn ${isSent ? 'dispatched-state' : ''}" data-txid="${t.id}" data-phone="${cust.phone}" style="padding: 6px 10px; font-size: 11px; margin:0; width:100%; text-align:center; background: ${isSent ? '#f0f2f1' : 'var(--green)'}; box-shadow: none; color: ${isSent ? '#8a9491' : '#fff'};">
+          ${isSent ? '✓ Sent' : '<i class="ri-whatsapp-line"></i> Send'}
         </button>
       </td>
       <td><strong>${escapeHtml(cust.name)}</strong></td>
       <td>${formatDate(t.date)}</td>
       <td>
         <span class="status ${isDebt ? 'pending' : 'sent'}">
-          <i></i>${isDebt ? '🔴 DEBT' : '🟢 PAYMENT'}
+          ${isDebt ? '🔴 DEBT' : '🟢 PAYMENT'}
         </span>
       </td>
       <td class="amount" style="text-align: right; padding-right: 16px; color: ${isDebt ? '#e11d48' : 'var(--green)'};">₹${money(t.amount)}</td>
@@ -367,8 +372,12 @@ function openModal(modalId) {
   if (modal) {
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
-    // Freeze parent page scroll layers
     document.body.classList.add('modal-open-freeze');
+    // Auto-focus soft keyboard into active locator field instantly
+    setTimeout(() => {
+      const firstInput = modal.querySelector('input:not([type="hidden"])');
+      if (firstInput) firstInput.focus();
+    }, 250);
   }
 }
 
@@ -377,8 +386,7 @@ function closeModal(modalId) {
   if (modal) {
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
-    // Check if any other modal backdrop remains open before removing body lock
-    if ($$('.modal-backdrop.open').length === 0) {
+    if ($('.modal-backdrop.open') === null) {
       document.body.classList.remove('modal-open-freeze');
     }
   }
@@ -393,6 +401,11 @@ function resetTxModal() {
   $('#txModalRecentContainer').style.display = 'none';
   $('#txModalSearchResults').style.display = 'none';
   $('#txModalSearchResults').innerHTML = '';
+  
+  // Restore default Debit selection button state layout mechanics
+  $$('.binary-pill-btn').forEach(b => b.classList.remove('active'));
+  $('.binary-pill-btn.pill-debt').classList.add('active');
+  $('#txModalTypeHidden').value = 'DEBT';
 }
 
 function populateTxModalAccountSelection(phone) {
@@ -403,7 +416,6 @@ function populateTxModalAccountSelection(phone) {
   $('#txModalSearchResults').style.display = 'none';
   $('#txModalAccountStatus').style.display = 'flex';
   $('#txModalSelectedName').textContent = cust.name;
-  $('#txModalSelectedBalance').textContent = `Outstanding: ₹${money(getCustomerMetrics(phone).outstanding)}`;
 }
 
 // ============================================================================
@@ -452,6 +464,53 @@ function bindApplicationEvents() {
     }
   });
 
+  // --- HIGH-SPEED CLASSIFICATION BINARY DECK TOGGLE CONTROLLER ---
+  document.body.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.binary-pill-btn');
+    if (toggleBtn) {
+      e.preventDefault();
+      $$('.binary-pill-btn').forEach(b => b.classList.remove('active'));
+      toggleBtn.classList.add('active');
+      $('#txModalTypeHidden').value = toggleBtn.getAttribute('data-type');
+    }
+  });
+
+  // --- DYNAMIC DATA SECTION SPECIFIC CSV STATEMENT DOWNLOAD ENGINE ---
+  $('#txSectionDownloadBtn').addEventListener('click', () => {
+    const query = $('#txSearchInput').value.toLowerCase().trim();
+    const dateF = $('#txDateFilterInput').value;
+    const typeF = $('#txTypeFilterSelect').value;
+    
+    // Extract strictly the filtered view set context rows matching the interface state
+    let filteredList = [...state.transactions];
+    if (query) filteredList = filteredList.filter(t => (t.description || '').toLowerCase().includes(query) || t.customerPhone.includes(query));
+    if (dateF) filteredList = filteredList.filter(t => t.date === dateF);
+    if (typeF !== 'ALL') filteredList = filteredList.filter(t => t.type === typeF);
+
+    if (filteredList.length === 0) {
+      alert('No ledger logs match your specific chosen date filter block parameters.');
+      return;
+    }
+
+    // Compile pure structured matrix spreadsheet representation format rows strings
+    let csvData = 'Date,Customer Name,Phone Number,Classification Type,Amount,Description\n';
+    filteredList.forEach(t => {
+      const c = state.customers[t.customerPhone] || { name: 'Deleted Profile', phone: t.customerPhone };
+      csvData += `"${formatDate(t.date)}","${c.name.replaceAll('"', '""')}","+91${c.phone}","${t.type}",${t.amount},"${(t.description || 'Reference Entry').replaceAll('"', '""')}"\n`;
+    });
+
+    // Fire low-overhead binary blob local browser system trigger down link
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const targetUrl = URL.createObjectURL(blob);
+    const triggerLink = document.createElement('a');
+    triggerLink.href = targetUrl;
+    triggerLink.setAttribute('download', `CredTrack_Ledger_Statement_${dateF || 'Complete_Collection'}.csv`);
+    document.body.appendChild(triggerLink);
+    triggerLink.click();
+    document.body.removeChild(triggerLink);
+    showToast('Downloaded', 'Statement dataset generated and saved.');
+  });
+
   // --- WHATSAPP DISPATCH HANDLERS ---
   document.body.addEventListener('click', (e) => {
     const btn = e.target.closest('.quick-row-send-btn');
@@ -464,7 +523,7 @@ function bindApplicationEvents() {
     const message = compileMessageString(phone, selectedTpl.body);
     
     if (tx) tx.sent = true;
-    saveToStorage();
+    localStorage.setItem('kf_v2_transactions', JSON.stringify(state.transactions));
     btn.classList.add('dispatched-state');
     btn.innerHTML = '✓ Sent';
 
@@ -481,7 +540,7 @@ function bindApplicationEvents() {
     state.transactions.forEach(t => {
       if (t.customerPhone === phone && t.date === TODAY) t.sent = true;
     });
-    saveToStorage();
+    localStorage.setItem('kf_v2_transactions', JSON.stringify(state.transactions));
     renderCurrentView();
     
     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`, '_blank');
@@ -499,7 +558,7 @@ function bindApplicationEvents() {
     const dropdownBtn = e.target.closest('.select-preview-template-btn');
     if (dropdownBtn) {
       state.templates.activeId = dropdownBtn.dataset.id;
-      saveToStorage();
+      localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
       renderTemplatesWorkspaceView();
       if ($('#recipientSelect').value) updateDashboardMessagePreview();
     }
@@ -507,7 +566,7 @@ function bindApplicationEvents() {
     const defaultBtn = e.target.closest('.make-default-template-btn');
     if (defaultBtn) {
       state.templates.activeId = defaultBtn.dataset.id;
-      saveToStorage();
+      localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
       renderTemplatesWorkspaceView();
       showToast('Template Updated', 'New system structural default initialized.');
     }
@@ -519,10 +578,10 @@ function bindApplicationEvents() {
     if (delBtn) {
       const id = delBtn.dataset.id;
       if (confirm('Are you certain you wish to purge this transaction record from local registers?')) {
-        state.transactions = state.transactions.filter(t => t.id !== id);
-        saveToStorage();
-        renderCurrentView();
-        showToast('Purged', 'Ledger balances updated successfully.');
+        DB.purgeTransaction(id).then(() => {
+          renderCurrentView();
+          showToast('Purged', 'Ledger balances updated successfully.');
+        });
       }
     }
   });
@@ -548,7 +607,9 @@ function bindApplicationEvents() {
   $('#ledgerAddDebtBtn')?.addEventListener('click', () => {
     resetTxModal();
     $('#txModalTitle').textContent = 'Add Debt (+)';
-    $('#txModalForm').elements['type'].value = 'DEBT';
+    $$('.binary-pill-btn').forEach(b => b.classList.remove('active'));
+    $('.binary-pill-btn.pill-debt').classList.add('active');
+    $('#txModalTypeHidden').value = 'DEBT';
     $('#txModalForm').elements['date'].value = TODAY;
     populateTxModalAccountSelection(state.selectedLedgerCustomerPhone);
     openModal('txModal');
@@ -557,7 +618,9 @@ function bindApplicationEvents() {
   $('#ledgerAddPaymentBtn')?.addEventListener('click', () => {
     resetTxModal();
     $('#txModalTitle').textContent = 'Add Payment (-)';
-    $('#txModalForm').elements['type'].value = 'CREDIT';
+    $$('.binary-pill-btn').forEach(b => b.classList.remove('active'));
+    $('.binary-pill-btn.pill-credit').classList.add('active');
+    $('#txModalTypeHidden').value = 'CREDIT';
     $('#txModalForm').elements['date'].value = TODAY;
     populateTxModalAccountSelection(state.selectedLedgerCustomerPhone);
     openModal('txModal');
@@ -596,6 +659,7 @@ function bindApplicationEvents() {
     `).join('');
   });
 
+  // Intercept selection from autocompleted predictive layout row items
   document.body.addEventListener('click', (e) => {
     const rowBtn = e.target.closest('.search-autocomplete-row-btn');
     if (rowBtn && rowBtn.dataset.phone) {
@@ -606,6 +670,7 @@ function bindApplicationEvents() {
     if (badge) populateTxModalAccountSelection(badge.dataset.phone);
   });
 
+  // Close predictive autocomplete menus when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#txModalSearchCust') && !e.target.closest('#txModalSearchResults')) {
       if ($('#txModalSearchResults')) $('#txModalSearchResults').style.display = 'none';
@@ -622,18 +687,18 @@ function bindApplicationEvents() {
     const item = {
       id: 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4),
       customerPhone: state.activeTxModalTargetPhone,
-      type: fData.get('type'),
+      type: $('#txModalTypeHidden').value,
       amount: Number(fData.get('amount')),
       date: fData.get('date'),
       description: fData.get('description'),
       sent: false
     };
 
-    state.transactions.push(item);
-    saveToStorage();
-    closeModal('txModal');
-    renderCurrentView();
-    showToast('Success', 'Transaction committed to local ledger stores.');
+    DB.commitTransaction(item).then(() => {
+      closeModal('txModal');
+      renderCurrentView();
+      showToast('Success', 'Transaction committed safely.');
+    });
   });
 
   // --- CUSTOMER CREATION DIRECTORY ACTIONS ---
@@ -653,11 +718,11 @@ function bindApplicationEvents() {
     if (phone.length !== 10) return alert('Enter a legal, structural 10-digit primary mobile vector.');
     if (state.customers[phone]) return alert('An account registry allocation matching this key already exists.');
 
-    state.customers[phone] = { name, phone };
-    saveToStorage();
-    closeModal('customerQuickModal');
-    renderCurrentView();
-    showToast('Created Account', `${name} cataloged inside ledger system.`);
+    DB.saveCustomer(phone, { name, phone }).then(() => {
+      closeModal('customerQuickModal');
+      renderCurrentView();
+      showToast('Created Account', `${name} cataloged inside ledger system.`);
+    });
   });
 
   // --- TEMPLATE EDITING WORKSPACE FLOWS ---
@@ -701,7 +766,7 @@ function bindApplicationEvents() {
       state.templates.custom.push({ id, title, body });
     }
 
-    saveToStorage();
+    localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
     closeModal('templateModal');
     renderTemplatesWorkspaceView();
     if ($('#recipientSelect').value) updateDashboardMessagePreview();
@@ -720,18 +785,21 @@ function bindApplicationEvents() {
   $('#businessPageForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const fData = new FormData(e.target);
-    state.business.shopName = fData.get('shopName').trim();
-    state.business.ownerName = fData.get('ownerName').trim();
-    state.business.businessId = fData.get('businessId').trim();
-    state.business.upiId = fData.get('upiId').trim();
-    state.business.businessPhone = fData.get('businessPhone').trim();
+    const updatedProfile = {
+      shopName: fData.get('shopName').trim(),
+      ownerName: fData.get('ownerName').trim(),
+      businessId: fData.get('businessId').trim(),
+      upiId: fData.get('upiId').trim(),
+      businessPhone: fData.get('businessPhone').trim()
+    };
 
-    saveToStorage();
-    renderCurrentView();
-    showToast('Saved Settings', 'System profile state variables rewritten.');
+    DB.updateProfile(updatedProfile).then(() => {
+      renderCurrentView();
+      showToast('Saved Settings', 'System profile state variables rewritten.');
+    });
   });
 
-  // --- UTILITY DIRECT SUBSYSTEMS ---
+  // --- PRINT MATRIX SYSTEM LAYOUT ---
   $('#ledgerPrintBtn').addEventListener('click', () => window.print());
   
   $('#mobileDeviceContactImportBtn').addEventListener('click', async () => {
