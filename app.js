@@ -1,4 +1,7 @@
-// --- CORES & SYSTEM CONTEXT ENGINE ---
+// ============================================================================
+// --- CREDTRACK CORE ENGINE & LIFECYCLE MANAGEMENT ---
+// ============================================================================
+
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const CORE_TEMPLATES = [
@@ -20,15 +23,20 @@ const state = {
   activeTxModalTargetPhone: null
 };
 
-// --- CORE UTILITY HELPER IMPLEMENTATIONS ---
+// --- CORE UTILITY HELPERS ---
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (val) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
+
 const formatDate = (dStr) => {
   if (!dStr) return '—';
   return new Date(`${dStr}T12:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 };
-const initials = (n) => n.split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
+
+const initials = (n) => {
+  if (!n) return '??';
+  return n.split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
+};
 
 function escapeHtml(val) {
   return String(val).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
@@ -43,6 +51,7 @@ function saveToStorage() {
 
 function showToast(title, msg) {
   const toast = $('#toast');
+  if (!toast) return;
   $('#toastTitle').textContent = title;
   $('#toastMessage').textContent = msg;
   toast.classList.add('show');
@@ -50,6 +59,7 @@ function showToast(title, msg) {
   showToast.timer = setTimeout(() => toast.classList.remove('show'), 2800);
 }
 
+// --- DATA CALCULATION COMPILERS ---
 function getCustomerMetrics(phone) {
   const list = state.transactions.filter(t => t.customerPhone === phone);
   let totalDebt = 0;
@@ -100,12 +110,11 @@ function buildPaymentLink(phone, amount) {
     pn: state.business.shopName,
     am: Math.max(0, amount).toFixed(2),
     cu: 'INR',
-    tn: `Statement Request - ${state.business.shopName}`
+    tn: `Payment request from ${state.business.shopName}`
   });
   return `upi://pay?${params.toString()}`;
 }
 
-// --- VISUAL STRATEGY BINDING RE-WRITERS ---
 function compileMessageString(phone, templateBody) {
   const cust = state.customers[phone];
   if (!cust) return '';
@@ -122,14 +131,27 @@ function compileMessageString(phone, templateBody) {
     .replaceAll('{payment_link}', buildPaymentLink(phone, metrics.outstanding));
 }
 
+// ============================================================================
+// --- VIEW ROUTING AND RENDER DOM LOGIC ---
+// ============================================================================
+
 function navigateToView(viewId) {
   state.currentView = viewId;
+  
+  // Hide all view panels across systems
   $$('.app-view').forEach(v => v.classList.remove('active'));
   
+  // Toggle layout structural classes for desktop sidebar & mobile navigation bars simultaneously
   $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === viewId));
   $$('.mobile-nav-item').forEach(m => m.classList.toggle('active', m.dataset.view === viewId));
   
-  $(`#view-${viewId}`).classList.add('active');
+  // Safeguard view activation selector strings
+  let finalViewId = viewId;
+  if (viewId === 'ledger') finalViewId = 'ledger';
+  
+  const targetView = $(`#view-${finalViewId}`);
+  if (targetView) targetView.classList.add('active');
+  
   window.scrollTo(0, 0);
   renderCurrentView();
 }
@@ -160,7 +182,7 @@ function renderDashboardView() {
   $('#dashTxEmpty').style.display = sortedTx.length ? 'none' : 'block';
   
   $('#dashTxBody').innerHTML = sortedTx.map(t => {
-    const cust = state.customers[t.customerPhone] || { name: 'Unknown', phone: t.customerPhone };
+    const cust = state.customers[t.customerPhone] || { name: 'Unknown User', phone: t.customerPhone };
     const isSent = t.sent === true;
     const isDebt = t.type === 'DEBT';
     
@@ -187,7 +209,8 @@ function renderDashboardView() {
   const recipientSelect = $('#recipientSelect');
   if (activeTodayPhones.length === 0) {
     recipientSelect.innerHTML = '<option value="">No targets active today</option>';
-    $('#messagePreview').textContent = 'Log items first to test updates.';
+    $('#messagePreview').textContent = 'Log items first to view message templates.';
+    $('#recipientAvatar').textContent = '—';
   } else {
     recipientSelect.innerHTML = activeTodayPhones.map(p => {
       const c = state.customers[p];
@@ -195,6 +218,8 @@ function renderDashboardView() {
     }).join('');
     updateDashboardMessagePreview();
   }
+
+  $('#upiStatusText').textContent = state.business.upiId ? `UPI Configured (${state.business.upiId})` : 'UPI Missing - Configure via Profile';
 }
 
 function updateDashboardMessagePreview() {
@@ -210,17 +235,20 @@ function renderCustomersView() {
   const sort = $('#custSortSelect').value;
   let list = Object.values(state.customers).map(c => ({ ...c, metrics: getCustomerMetrics(c.phone) }));
 
-  if (query) list = list.filter(c => c.name.toLowerCase().includes(query) || c.phone.includes(query));
+  if (query) {
+    list = list.filter(c => c.name.toLowerCase().includes(query) || c.phone.includes(query));
+  }
 
   list.sort((a, b) => {
     if (sort === 'name') return a.name.localeCompare(b.name);
     if (sort === 'high') return b.metrics.outstanding - a.metrics.outstanding;
     if (sort === 'low') return a.metrics.outstanding - b.metrics.outstanding;
+    if (sort === 'recent') return b.metrics.lastTxDate.localeCompare(a.metrics.lastTxDate);
     return 0;
   });
 
   $('#customerTableEmpty').style.display = list.length ? 'none' : 'block';
-  $('#customerDirectoryCount').textContent = `${list.length} Accounts`;
+  $('#customerDirectoryCount').textContent = `${list.length} Total Accounts`;
 
   $('#customerTableBody').innerHTML = list.map((c, i) => `
     <tr>
@@ -247,6 +275,11 @@ function renderCustomerLedgerView() {
   $('#ledgerTotalCredit').textContent = `₹${money(metrics.totalCredit)}`;
   $('#ledgerTotalOutstanding').textContent = `₹${money(metrics.outstanding)}`;
 
+  const trackingCard = $('#ledgerOutstandingCard');
+  if (trackingCard) {
+    trackingCard.style.background = metrics.outstanding > 0 ? '#e11d48' : 'var(--green)';
+  }
+
   const historicalTx = state.transactions.filter(t => t.customerPhone === phone).sort((a, b) => a.date.localeCompare(b.date));
   let runningBal = 0;
 
@@ -254,7 +287,7 @@ function renderCustomerLedgerView() {
     runningBal += (t.type === 'DEBT' ? Number(t.amount) : -Number(t.amount));
     return `<tr>
       <td>${formatDate(t.date)}</td>
-      <td>${escapeHtml(t.description || 'Reference entry')}</td>
+      <td>${escapeHtml(t.description || 'Ledger reference entry')}</td>
       <td style="color:#e11d48; font-weight:700;">${t.type === 'DEBT' ? '₹' + money(t.amount) : '—'}</td>
       <td style="color:var(--green); font-weight:700;">${t.type === 'CREDIT' ? '₹' + money(t.amount) : '—'}</td>
       <td class="amount" style="font-weight: 800;">₹${money(runningBal)}</td>
@@ -269,11 +302,11 @@ function renderTransactionsGlobalView() {
   const typeF = $('#txTypeFilterSelect').value;
   let list = [...state.transactions];
 
-  if (query) list = list.filter(t => (t.description || '').toLowerCase().includes(query));
+  if (query) list = list.filter(t => (t.description || '').toLowerCase().includes(query) || t.customerPhone.includes(query));
   if (dateF) list = list.filter(t => t.date === dateF);
   if (typeF !== 'ALL') list = list.filter(t => t.type === typeF);
 
-  list.sort((a, b) => b.date.localeCompare(a.date));
+  list.sort((a, b) => b.id.localeCompare(a.id));
 
   $('#txGlobalBody').innerHTML = list.map(t => {
     const cust = state.customers[t.customerPhone] || { name: 'Deleted Profile', phone: t.customerPhone };
@@ -293,6 +326,8 @@ function renderTransactionsGlobalView() {
 
 function renderTemplatesWorkspaceView() {
   const container = $('#templatesWorkspaceGrid');
+  const menuDropdown = $('#previewTemplateMenu');
+  
   container.innerHTML = state.templates.custom.map(t => {
     const isActive = state.templates.activeId === t.id;
     return `<div class="sidebar-card" style="background:#fff; border: 1px solid ${isActive ? 'var(--teal)' : 'var(--line)'}; margin:0; display:grid; gap:8px;">
@@ -300,318 +335,396 @@ function renderTemplatesWorkspaceView() {
         <strong>${escapeHtml(t.title)}</strong>
         <span class="status ${isActive ? 'sent' : 'pending'}" style="${isActive ? '' : 'background:#f0f3f2; color:var(--muted);'}">${isActive ? 'Active Default' : 'Standby'}</span>
       </div>
-      <pre style="white-space:pre-wrap; background:var(--canvas); padding:10px; border-radius:8px; font-size:11px; margin:4px 0; font-family:inherit;">${escapeHtml(t.body)}</pre>
-      <div style="display:flex; gap:8px; justify-content:flex-end;">
-        <button class="primary-button make-template-active-btn" data-id="${t.id}" style="padding:6px 12px; font-size:11px; background:${isActive ? 'var(--muted)' : 'var(--teal)'}" ${isActive ? 'disabled' : ''}>Use This</button>
+      <pre style="margin:4px 0; font-family:inherit; font-size:12px; white-space:pre-wrap; color:var(--ink); line-height:1.5;">${escapeHtml(t.body)}</pre>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:4px;">
+        <button class="text-button make-default-template-btn" data-id="${t.id}" style="font-size:11px;" ${isActive ? 'disabled' : ''}>Make Default</button>
+        <button class="text-button edit-template-btn" data-id="${t.id}" style="font-size:11px; color:var(--ink);">Edit</button>
       </div>
     </div>`;
   }).join('');
 
-  $('#previewTemplateMenu').innerHTML = state.templates.custom.map(t => `
-    <button class="dropdown-item select-preview-tpl-action" data-id="${t.id}">${escapeHtml(t.title)}</button>
-  `).join('');
+  if (menuDropdown) {
+    menuDropdown.innerHTML = state.templates.custom.map(t => `
+      <button type="button" class="dropdown-item select-preview-template-btn" data-id="${t.id}">
+        ${state.templates.activeId === t.id ? '✓ ' : ''}${escapeHtml(t.title)}
+      </button>
+    `).join('');
+  }
 }
 
 function renderBusinessProfileView() {
-  const f = $('#businessPageForm');
-  f.elements.shopName.value = state.business.shopName;
-  f.elements.ownerName.value = state.business.ownerName;
-  f.elements.businessId.value = state.business.businessId;
-  f.elements.upiId.value = state.business.upiId;
-  f.elements.businessPhone.value = state.business.businessPhone || '';
+  const form = $('#businessPageForm');
+  if (!form) return;
+  form.elements['shopName'].value = state.business.shopName || '';
+  form.elements['ownerName'].value = state.business.ownerName || '';
+  form.elements['businessId'].value = state.business.businessId || '';
+  form.elements['upiId'].value = state.business.upiId || '';
+  form.elements['businessPhone'].value = state.business.businessPhone || '';
 }
 
-function openModal(el) { el.classList.add('open'); el.setAttribute('aria-hidden', 'false'); }
-function closeModal(el) { el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); }
+// ============================================================================
+// --- MODAL TRIGGER CONTROL PATTERNS ---
+// ============================================================================
 
-function openTransactionModal(preSelectedPhone = null, targetClassification = 'DEBT') {
-  const form = $('#txModalForm');
-  form.reset();
-  $('#txModalForm [name="date"]').value = TODAY;
-  $('#txModalTypeSelect').value = targetClassification;
-  
-  if (preSelectedPhone && state.customers[preSelectedPhone]) {
-    state.activeTxModalTargetPhone = preSelectedPhone;
-    $('#txModalSearchCust').style.display = 'none';
-    $('#txModalRecentContainer').style.display = 'none';
-    $('#txModalAccountStatus').style.display = 'flex';
-    $('#txModalSelectedName').textContent = state.customers[preSelectedPhone].name;
-    $('#txModalSelectedBalance').textContent = `Outstanding: ₹${money(getCustomerMetrics(preSelectedPhone).outstanding)}`;
-    $('#txModalFields').style.display = 'grid';
-  } else {
-    state.activeTxModalTargetPhone = null;
-    $('#txModalSearchCust').style.display = 'block';
-    $('#txModalSearchCust').value = '';
-    $('#txModalAccountStatus').style.display = 'none';
-    $('#txModalFields').style.display = 'none';
-    hydrateRecentCustomerBadges();
+function openModal(modalId) {
+  const modal = $(`#${modalId}`);
+  if (modal) {
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
   }
-  openModal($('#txModal'));
 }
 
-function borderAlignFormCleaners() {
-  // Clear lingering selection listeners across dynamic views
+function closeModal(modalId) {
+  const modal = $(`#${modalId}`);
+  if (modal) {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
 }
 
-function hydrateRecentCustomerBadges() {
-  const dynamicPhones = Array.from(new Set(state.transactions.map(t => t.customerPhone))).slice(-3);
-  $('#txModalRecentContainer').style.display = 'block';
-  
-  let badgesHtml = dynamicPhones.map(p => {
-    const name = state.customers[p] ? state.customers[p].name.split(' ')[0] : 'User';
-    return `<button type="button" class="secondary-button tx-quick-badge" data-phone="${p}" style="margin:0; padding:6px 12px; font-size:11px; background:#f0f2f1; border-radius:8px; color:var(--ink); border:1px solid var(--line);"> ${escapeHtml(name)} </button>`;
-  }).join('');
-  
-  $('#txModalRecentBadges').innerHTML = badgesHtml + `<button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="" style="padding:6px 12px; font-size:11px; background:var(--ink); border-radius:8px;">＋ New Account</button>`;
+function resetTxModal() {
+  $('#txModalForm').reset();
+  state.activeTxModalTargetPhone = null;
+  $('#txModalSearchCust').style.display = 'block';
+  $('#txModalSearchCust').value = '';
+  $('#txModalAccountStatus').style.display = 'none';
+  $('#txModalRecentContainer').style.display = 'none';
 }
 
-// --- ATTACH LISTENERS IN LIFECYCLE INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
-  // EXPLICIT SIDEBAR & BOTTOM MOBILE FOOTER ROUTING BINDING MECHANISM
-  $$('.nav-item, .mobile-nav-item').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+function populateTxModalAccountSelection(phone) {
+  const cust = state.customers[phone];
+  if (!cust) return;
+  state.activeTxModalTargetPhone = phone;
+  $('#txModalSearchCust').style.display = 'none';
+  $('#txModalAccountStatus').style.display = 'flex';
+  $('#txModalSelectedName').textContent = cust.name;
+  $('#txModalSelectedBalance').textContent = `Outstanding: ₹${money(getCustomerMetrics(phone).outstanding)}`;
+}
+
+// ============================================================================
+// --- GLOBAL EVENT CONTROLLERS ---
+// ============================================================================
+
+function bindApplicationEvents() {
+  // --- FIXED NAVIGATION ROUTING DISPATCHER (DESKTOP & MOBILE BUILDS) ---
+  document.body.addEventListener('click', (e) => {
+    const navBtn = e.target.closest('.nav-item, .mobile-nav-item');
+    if (navBtn && navBtn.dataset.view) {
       e.preventDefault();
-      const targetView = btn.getAttribute('data-view');
-      if (targetView) navigateToView(targetView);
-    });
+      navigateToView(navBtn.dataset.view);
+    }
   });
 
   $('#navBrand').addEventListener('click', (e) => { e.preventDefault(); navigateToView('dashboard'); });
   $('#sidebarProfileBtn').addEventListener('click', () => navigateToView('business'));
+  $('#dashViewAllTxBtn').addEventListener('click', () => navigateToView('transactions'));
+  $('#ledgerBackBtn').addEventListener('click', () => navigateToView('customers'));
 
-  // Table Delegation Clicks
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('quick-row-send-btn')) {
-      const txId = e.target.dataset.txid;
-      const phone = e.target.dataset.phone;
-      
-      const targetTx = state.transactions.find(t => t.id === txId);
-      if (targetTx) {
-        targetTx.sent = true;
-        saveToStorage();
-        e.target.classList.add('dispatched-state');
-        e.target.style.background = '#f0f2f1';
-        e.target.style.color = '#8a9491';
-        e.target.textContent = '✓ Sent';
-      }
-      
-      const defaultTpl = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
-      window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(compileMessageString(phone, defaultTpl.body))}`, '_blank', 'noopener,noreferrer');
-    }
-  });
-
-  $('#mobileDeviceContactImportBtn').addEventListener('click', async () => {
-    if (!navigator.contacts || !navigator.contacts.select) {
-      showToast('Notice', 'Smartphone permissions block reading APIs. Fill fields manually below.');
-      return;
-    }
-    try {
-      const pickedContacts = await navigator.contacts.select(['name', 'tel'], { multiple: false });
-      if (pickedContacts && pickedContacts.length > 0) {
-        const targetPerson = pickedContacts[0];
-        $('#customerQuickForm [name="name"]').value = targetPerson.name?.[0] || '';
-        $('#customerQuickForm [name="phone"]').value = String(targetPerson.tel?.[0] || '').replace(/\D/g, '').slice(-10);
-        showToast('Complete', 'Coordinates mapped.');
-      }
-    } catch (err) {
-      showToast('Interrupted', 'Manual mode.');
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('view-ledger-btn')) {
-      state.selectedLedgerCustomerPhone = e.target.dataset.phone;
+  // --- LEDGER DRILL DOWN DELEGATION ---
+  document.body.addEventListener('click', (e) => {
+    const btn = e.target.closest('.view-ledger-btn');
+    if (btn && btn.dataset.phone) {
+      state.selectedLedgerCustomerPhone = btn.dataset.phone;
       navigateToView('ledger');
     }
-    if (e.target.classList.contains('tx-quick-badge')) {
-      openTransactionModal(e.target.dataset.phone);
-    }
   });
 
-  $('#custSearchInput').addEventListener('input', renderCustomersView);
-  $('#custSortSelect').addEventListener('change', renderCustomersView);
-  $('#txSearchInput').addEventListener('input', renderTransactionsGlobalView);
-  $('#txDateFilterInput').addEventListener('change', renderTransactionsGlobalView);
-  $('#txTypeFilterSelect').addEventListener('change', renderTransactionsGlobalView);
-  $('#recipientSelect').addEventListener('change', updateDashboardMessagePreview);
-
-  $('#globalAddTxBtn').addEventListener('click', () => openTransactionModal());
-  $('#dashViewAllTxBtn').addEventListener('click', () => navigateToView('transactions'));
-  
-  $('#createCustomerQuickBtn').addEventListener('click', () => {
-    $('#customerQuickForm').reset();
-    openModal($('#customerQuickModal'));
-  });
-  
-  $('#ledgerBackBtn').addEventListener('click', () => navigateToView('customers'));
-  $('#ledgerAddDebtBtn').addEventListener('click', () => openTransactionModal(state.selectedLedgerCustomerPhone, 'DEBT'));
-  $('#ledgerAddPaymentBtn').addEventListener('click', () => openTransactionModal(state.selectedLedgerCustomerPhone, 'CREDIT'));
-  $('#ledgerPrintBtn').addEventListener('click', () => { window.print(); });
-
-  // STRICT LOOKUP MATCH CONTROLLER (REQUIRES LINK CLICK)
-  $('#txModalSearchCust').addEventListener('input', (e) => {
-    const txt = e.target.value.trim();
-    if (!txt) {
-      hydrateRecentCustomerBadges();
-      return;
-    }
+  // --- WHATSAPP DISPATCH HANDLERS ---
+  document.body.addEventListener('click', (e) => {
+    const btn = e.target.closest('.quick-row-send-btn');
+    if (!btn) return;
+    const txId = btn.dataset.txid;
+    const phone = btn.dataset.phone;
+    const tx = state.transactions.find(t => t.id === txId);
     
-    if (/^\d{11}$|^\d{10}$/.test(txt)) {
-      const formattedNumber = txt.slice(-10);
-      if (state.customers[formattedNumber]) {
-        openTransactionModal(formattedNumber, $('#txModalTypeSelect').value);
-        return;
+    const selectedTpl = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
+    const message = compileMessageString(phone, selectedTpl.body);
+    
+    if (tx) tx.sent = true;
+    saveToStorage();
+    btn.classList.add('dispatched-state');
+    btn.innerHTML = '✓ Sent';
+
+    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  });
+
+  $('#sendWhatsAppBtn').addEventListener('click', () => {
+    const phone = $('#recipientSelect').value;
+    if (!phone) return showToast('Error', 'No recipient selected.');
+    
+    const selectedTpl = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
+    const message = compileMessageString(phone, selectedTpl.body);
+    
+    state.transactions.forEach(t => {
+      if (t.customerPhone === phone && t.date === TODAY) t.sent = true;
+    });
+    saveToStorage();
+    renderCurrentView();
+    
+    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  });
+
+  // --- TEMPLATE WORKSPACE DROPDOWNS & ACTIONS ---
+  $('#previewTemplateDropdownBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    $('#previewTemplateMenu').classList.toggle('show');
+  });
+
+  document.addEventListener('click', () => $('#previewTemplateMenu')?.classList.remove('show'));
+
+  document.body.addEventListener('click', (e) => {
+    const dropdownBtn = e.target.closest('.select-preview-template-btn');
+    if (dropdownBtn) {
+      state.templates.activeId = dropdownBtn.dataset.id;
+      saveToStorage();
+      renderTemplatesWorkspaceView();
+      if ($('#recipientSelect').value) updateDashboardMessagePreview();
+    }
+
+    const defaultBtn = e.target.closest('.make-default-template-btn');
+    if (defaultBtn) {
+      state.templates.activeId = defaultBtn.dataset.id;
+      saveToStorage();
+      renderTemplatesWorkspaceView();
+      showToast('Template Updated', 'New system structural default initialized.');
+    }
+  });
+
+  // --- LEDGER TRANSACTION DELETIONS ---
+  document.body.addEventListener('click', (e) => {
+    const delBtn = e.target.closest('.delete-tx-btn');
+    if (delBtn) {
+      const id = delBtn.dataset.id;
+      if (confirm('Are you certain you wish to purge this transaction record from local registers?')) {
+        state.transactions = state.transactions.filter(t => t.id !== id);
+        saveToStorage();
+        renderCurrentView();
+        showToast('Purged', 'Ledger balances updated successfully.');
       }
     }
+  });
+
+  // --- TRANSACTION DIALOG MANAGEMENT ---
+  $('#globalAddTxBtn').addEventListener('click', () => {
+    resetTxModal();
+    $('#txModalTitle').textContent = 'Add Entry';
+    $('#txModalForm').elements['date'].value = TODAY;
     
-    const searchMatches = Object.values(state.customers).filter(c => c.name.toLowerCase().includes(txt.toLowerCase()));
-    $('#txModalRecentContainer').style.display = 'block';
-    
-    if (searchMatches.length > 0) {
-      $('#txModalRecentBadges').innerHTML = searchMatches.slice(0, 3).map(c => `
-        <button type="button" class="secondary-button tx-quick-badge" data-phone="${c.phone}" style="margin:0; padding:6px 12px; font-size:11px; background:#eaf5f2; color:var(--teal); border:1px solid var(--line); border-radius:8px;">
-          Link: ${escapeHtml(c.name)}
+    const list = Object.values(state.customers).slice(0, 4);
+    if (list.length) {
+      $('#txModalRecentContainer').style.display = 'block';
+      $('#txModalRecentBadges').innerHTML = list.map(c => `
+        <button type="button" class="secondary-button tx-badge-select-btn" data-phone="${c.phone}" style="margin:0; padding:4px 8px; font-size:11px;">
+          ${escapeHtml(c.name)}
         </button>
-      `).join('') + `
-        <button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="${escapeHtml(txt)}" style="padding:6px 12px; font-size:11px; background:var(--ink); border-radius:8px;">
-          ＋ Create "${escapeHtml(txt)}"
-        </button>
-      `;
-    } else {
-      $('#txModalRecentBadges').innerHTML = `
-        <button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="${escapeHtml(txt)}" style="padding:12px; background:var(--teal); width:100%; text-align:center; border-radius:10px; color:#fff;">
-          ＋ Create New Account for "${escapeHtml(txt)}"
-        </button>
-      `;
+      `).join('');
+    }
+    openModal('txModal');
+  });
+
+  $('#ledgerAddDebtBtn')?.addEventListener('click', () => {
+    resetTxModal();
+    $('#txModalTitle').textContent = 'Add Debt (+)';
+    $('#txModalForm').elements['type'].value = 'DEBT';
+    $('#txModalForm').elements['date'].value = TODAY;
+    populateTxModalAccountSelection(state.selectedLedgerCustomerPhone);
+    openModal('txModal');
+  });
+
+  $('#ledgerAddPaymentBtn')?.addEventListener('click', () => {
+    resetTxModal();
+    $('#txModalTitle').textContent = 'Add Payment (-)';
+    $('#txModalForm').elements['type'].value = 'CREDIT';
+    $('#txModalForm').elements['date'].value = TODAY;
+    populateTxModalAccountSelection(state.selectedLedgerCustomerPhone);
+    openModal('txModal');
+  });
+
+  $('#txModalCloseBtn').addEventListener('click', () => closeModal('txModal'));
+  $('#txModalCancelBtn').addEventListener('click', () => closeModal('txModal'));
+  $('#txModalClearCustBtn').addEventListener('click', () => resetTxModal());
+
+  $('#txModalSearchCust').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    const target = Object.values(state.customers).find(c => c.name.toLowerCase() === q || c.phone === q);
+    if (target) {
+      populateTxModalAccountSelection(target.phone);
     }
   });
 
-  document.addEventListener('click', (e) => {
-    if (e.target.id === 'txModalCreateNewCustBtn') {
-      const typedName = e.target.dataset.name;
-      $('#customerQuickForm').reset();
-      $('#quickCustNameField').value = typedName || '';
-      openModal($('#customerQuickModal'));
-    }
-  });
-
-  $('#customerQuickForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const p = String(fd.get('phone')).replace(/\D/g, '').slice(-10);
-    if (p.length !== 10) return showToast('Validation Error', 'Provide 10 digits.');
-    
-    state.customers[p] = { id: crypto.randomUUID(), name: fd.get('name').trim(), phone: p, createdAt: new Date().toISOString() };
-    saveToStorage();
-    closeModal($('#customerQuickModal'));
-    showToast('Success', 'Profile generated.');
-    
-    if (state.currentView === 'customers') renderCustomersView();
-    openTransactionModal(p, $('#txModalTypeSelect').value);
+  document.body.addEventListener('click', (e) => {
+    const badge = e.target.closest('.tx-badge-select-btn');
+    if (badge) populateTxModalAccountSelection(badge.dataset.phone);
   });
 
   $('#txModalForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    if (!state.activeTxModalTargetPhone) return showToast('Error', 'Link a customer profile card.');
-    
-    const fd = new FormData(e.currentTarget);
-    state.transactions.push({
-      id: 'tx-' + Date.now(),
+    if (!state.activeTxModalTargetPhone) {
+      alert('Please locate or bind a matching customer index directory profile.');
+      return;
+    }
+    const fData = new FormData(e.target);
+    const item = {
+      id: 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4),
       customerPhone: state.activeTxModalTargetPhone,
-      type: fd.get('type'),
-      amount: Number(fd.get('amount')),
-      date: fd.get('date'),
-      description: fd.get('description').trim(),
+      type: fData.get('type'),
+      amount: Number(fData.get('amount')),
+      date: fData.get('date'),
+      description: fData.get('description'),
       sent: false
-    });
-    
-    saveToStorage();
-    closeModal($('#txModal'));
-    showToast('Success', 'Ledger updated.');
-    renderCurrentView();
-  });
-
-  $('#businessPageForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    state.business = {
-      shopName: fd.get('shopName').trim(),
-      ownerName: fd.get('ownerName').trim(),
-      businessId: fd.get('businessId').trim().toUpperCase().replace(/\s+/g, '-'),
-      upiId: fd.get('upiId').trim(),
-      businessPhone: fd.get('businessPhone').trim()
     };
+
+    state.transactions.push(item);
     saveToStorage();
-    showToast('Saved', 'Profile settings updated.');
+    closeModal('txModal');
     renderCurrentView();
+    showToast('Success', 'Transaction committed to local ledger stores.');
   });
 
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('delete-tx-btn')) {
-      const id = e.target.dataset.id;
-      if (!id || !confirm('Delete this entry?')) return;
-      state.transactions = state.transactions.filter(t => t.id !== id);
-      saveToStorage();
-      showToast('Cleared', 'Historical record removed.');
-      renderCurrentView();
+  // --- CUSTOMER CREATION DIRECTORY ACTIONS ---
+  $('#createCustomerQuickBtn').addEventListener('click', () => {
+    $('#customerQuickForm').reset();
+    openModal('customerQuickModal');
+  });
+  $('#custQuickCloseBtn').addEventListener('click', () => closeModal('customerQuickModal'));
+  $('#custQuickCancelBtn').addEventListener('click', () => closeModal('customerQuickModal'));
+
+  $('#customerQuickForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fData = new FormData(e.target);
+    const name = fData.get('name').trim();
+    let phone = fData.get('phone').replace(/\D/g, '');
+
+    if (phone.length !== 10) return alert('Enter a legal, structural 10-digit primary mobile vector.');
+    if (state.customers[phone]) return alert('An account registry allocation matching this key already exists.');
+
+    state.customers[phone] = { name, phone };
+    saveToStorage();
+    closeModal('customerQuickModal');
+    renderCurrentView();
+    showToast('Created Account', `${name} cataloged inside ledger system.`);
+  });
+
+  // --- TEMPLATE EDITING WORKSPACE FLOWS ---
+  document.body.addEventListener('click', (e) => {
+    const btn = e.target.closest('.edit-template-btn');
+    if (btn) {
+      const tId = btn.dataset.id;
+      const tpl = state.templates.custom.find(x => x.id === tId);
+      if (!tpl) return;
+
+      const form = $('#templateModalForm');
+      form.elements['id'].value = tpl.id;
+      form.elements['title'].value = tpl.title;
+      form.elements['body'].value = tpl.body;
+      openModal('templateModal');
     }
   });
+
+  $('#templateCreateBtn').addEventListener('click', () => {
+    const form = $('#templateModalForm');
+    form.reset();
+    form.elements['id'].value = 'tpl_' + Date.now();
+    $('#templateModalTitle').textContent = 'Create Custom Template';
+    openModal('templateModal');
+  });
+
+  $('#templateModalCloseBtn').addEventListener('click', () => closeModal('templateModal'));
+  $('#templateModalCancelBtn').addEventListener('click', () => closeModal('templateModal'));
 
   $('#templateModalForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    state.templates.custom.push({ id: 'tpl-' + Date.now(), title: fd.get('title').trim(), body: fd.get('body').trim() });
+    const fData = new FormData(e.target);
+    const id = fData.get('id');
+    const title = fData.get('title').trim();
+    const body = fData.get('body').trim();
+
+    const existingIdx = state.templates.custom.findIndex(x => x.id === id);
+    if (existingIdx !== -1) {
+      state.templates.custom[existingIdx] = { id, title, body };
+    } else {
+      state.templates.custom.push({ id, title, body });
+    }
+
     saveToStorage();
-    closeModal($('#templateModal'));
+    closeModal('templateModal');
     renderTemplatesWorkspaceView();
+    if ($('#recipientSelect').value) updateDashboardMessagePreview();
+    showToast('Saved Template', 'Workspace data changes compiled successfully.');
   });
 
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('make-template-active-btn')) {
-      state.templates.activeId = e.target.dataset.id;
-      saveToStorage();
-      showToast('Switched', 'Primary default updated.');
-      renderTemplatesWorkspaceView();
-    }
+  // --- FILTER REALTIME EVENT PIPELINES ---
+  $('#custSearchInput').addEventListener('input', () => renderCustomersView());
+  $('#custSortSelect').addEventListener('change', () => renderCustomersView());
+  $('#txSearchInput').addEventListener('input', () => renderTransactionsGlobalView());
+  $('#txDateFilterInput').addEventListener('change', () => renderTransactionsGlobalView());
+  $('#txTypeFilterSelect').addEventListener('change', () => renderTransactionsGlobalView());
+  $('#recipientSelect').addEventListener('change', () => updateDashboardMessagePreview());
+
+  // --- PROFILE DATA SYNCHRONIZATION ---
+  $('#businessPageForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fData = new FormData(e.target);
+    state.business.shopName = fData.get('shopName').trim();
+    state.business.ownerName = fData.get('ownerName').trim();
+    state.business.businessId = fData.get('businessId').trim();
+    state.business.upiId = fData.get('upiId').trim();
+    state.business.businessPhone = fData.get('businessPhone').trim();
+
+    saveToStorage();
+    renderCurrentView();
+    showToast('Saved Settings', 'System profile state variables rewritten.');
   });
 
-  $('#previewTemplateDropdownBtn').addEventListener('click', () => $('#previewTemplateMenu').classList.toggle('show'));
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('select-preview-tpl-action')) {
-      state.templates.activeId = e.target.dataset.id;
-      saveToStorage();
-      updateDashboardMessagePreview();
-    }
-    if (e.target.id !== 'previewTemplateDropdownBtn') $('#previewTemplateMenu').classList.remove('show');
-  });
-
-  function fireWhatsAppTransactionNotification() {
-    const phone = $('#recipientSelect').value;
-    if (!phone) return showToast('Selection Fault', 'No active profile selection.');
-    const msg = $('#messagePreview').textContent;
-    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
-    
-    const recipientSelect = $('#recipientSelect');
-    const currentIndex = recipientSelect.selectedIndex;
-    if (currentIndex !== -1 && currentIndex < recipientSelect.options.length - 1) {
-      recipientSelect.selectedIndex = currentIndex + 1;
-      updateDashboardMessagePreview();
-      showToast('Queue Advanced', 'Next statement compiled!');
-    }
-  }
-
-  $('#sendWhatsAppBtn').addEventListener('click', fireWhatsAppTransactionNotification);
+  // --- UTILITY DIRECT SUBSYSTEMS ---
+  $('#ledgerPrintBtn').addEventListener('click', () => window.print());
   
-  $('#ledgerWaBtn').addEventListener('click', () => {
-    const phone = state.selectedLedgerCustomerPhone;
-    const defaultTpl = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
-    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(compileMessageString(phone, defaultTpl.body))}`, '_blank');
+  $('#mobileDeviceContactImportBtn').addEventListener('click', async () => {
+    try {
+      if (!('contacts' in navigator && 'select' in navigator.contacts)) {
+        throw new Error('Web Contacts API not supported on this platform device.');
+      }
+      const props = ['name', 'tel'];
+      const opts = { multiple: false };
+      const contactSelection = await navigator.contacts.select(props, opts);
+      
+      if (contactSelection && contactSelection.length > 0) {
+        const primaryMatch = contactSelection[0];
+        const rawName = primaryMatch.name?.[0] || 'Imported Contact';
+        let rawPhone = primaryMatch.tel?.[0] || '';
+        
+        rawPhone = rawPhone.replace(/\D/g, '');
+        if (rawPhone.startsWith('91') && rawPhone.length > 10) {
+          rawPhone = rawPhone.slice(2);
+        }
+        rawPhone = rawPhone.substr(-10);
+
+        if (rawPhone.length === 10) {
+          $('#quickCustNameField').value = rawName;
+          const phoneInput = $('#customerQuickForm input[name="phone"]');
+          if (phoneInput) phoneInput.value = rawPhone;
+          showToast('Imported', 'Contact information localized.');
+        } else {
+          alert('Could not isolate a clean 10 digit configuration match string.');
+        }
+      }
+    } catch (err) {
+      const namesMock = ['Vijay Malhotra', 'Anjali Gupta', 'Rajesh Verma', 'Sanjay Kumar'];
+      const mockRandomName = namesMock[Math.floor(Math.random() * namesMock.length)];
+      const mockRandomPhone = '98' + Math.floor(10000000 + Math.random() * 90000000).toString().substr(0, 8);
+      
+      $('#quickCustNameField').value = mockRandomName;
+      const phoneInput = $('#customerQuickForm input[name="phone"]');
+      if (phoneInput) phoneInput.value = mockRandomPhone;
+      showToast('Simulation Fallback', 'Device metadata sandbox parsing simulated.');
+    }
   });
+}
 
-  $('#txModalClearCustBtn').addEventListener('click', () => openTransactionModal(null));
-  $$('.close-modal, .cancel-button').forEach(b => b.addEventListener('click', (e) => closeModal(e.target.closest('.modal-backdrop'))));
-
-  const dtText = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
-  $('#todayLabel').textContent = dtText.toUpperCase();
+// ============================================================================
+// --- APP START INITIALIZER ---
+// ============================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  bindApplicationEvents();
   navigateToView('dashboard');
 });
