@@ -272,24 +272,27 @@
   </div>
 
   <div class="modal-backdrop" id="txModal" aria-hidden="true">
-    <section class="modal" role="dialog" aria-modal="true">
+    <section class="modal" role="dialog" aria-modal="true" style="position:relative;">
       <div class="modal-head"><div><p class="eyebrow" id="txModalEyebrow">LEDGER LOG</p><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
       <form id="txModalForm">
         <label>Step 1: Locate Account</label>
-        <input type="text" id="txModalSearchCust" placeholder="🔍 Type complete customer name or phone..." autocomplete="off" />
+        <div style="position:relative; width:100%;">
+          <input type="text" id="txModalSearchCust" placeholder="🔍 Type name or mobile (e.g. V, Vi...)" autocomplete="off" />
+          <div id="txModalSearchResults" class="dropdown-menu" style="width:100%; max-height:160px; overflow-y:auto; left:0; right:0; top:100%;"></div>
+        </div>
         
-        <div id="txModalRecentContainer" style="margin-top:-4px; display:none;">
+        <div id="txModalRecentContainer" style="margin-top:10px; display:none;">
           <span style="font-size:10px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px;">OPTIONS:</span>
           <div id="txModalRecentBadges" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
         </div>
 
-        <div id="txModalAccountStatus" class="upi-ready" style="display:none; margin:5px 0 0; background:#f0f9ff; border-color:#bae6fd;">
+        <div id="txModalAccountStatus" class="upi-ready" style="display:none; margin:10px 0 0; background:#f0f9ff; border-color:#bae6fd;">
           <span>👤</span>
           <div><strong id="txModalSelectedName">Unlinked</strong><p id="txModalSelectedBalance">Outstanding: ₹0</p></div>
           <button type="button" class="secondary-button" id="txModalClearCustBtn" style="margin:0; padding:6px 12px; font-size:11px; background:#eaf5f2; color:var(--teal);">Change</button>
         </div>
 
-        <div id="txModalFields" style="display:grid; gap:14px; margin-top:5px;">
+        <div id="txModalFields" style="display:grid; gap:14px; margin-top:12px;">
           <div class="form-row">
             <label>Classification
               <select name="type" id="txModalTypeSelect">
