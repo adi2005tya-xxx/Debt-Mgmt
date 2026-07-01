@@ -1,380 +1,365 @@
-:root { 
-  --ink:#17211f; 
-  --muted:#6d7774; 
-  --line:#e5e9e7; 
-  --paper:#fff; 
-  --canvas:#f5f7f6; 
-  --teal:#0d766e; 
-  --teal-dark:#075f59; 
-  --mint:#dff3ec; 
-  --green:#1f9d65; 
-  --wa:#1fbf68; 
-  --shadow:0 8px 28px rgba(26,57,51,.07); 
-}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>CredTrack — Mobile Ledger Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+      <a class="brand" href="#" id="navBrand">
+        <span class="brand-mark">C</span>
+        <span><strong>Cred</strong>Track</span>
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Overview</button>
+        <button class="nav-item" data-view="customers"><span>♙</span> Customers</button>
+        <button class="nav-item" data-view="transactions"><span>▤</span> Transactions</button>
+        <button class="nav-item" data-view="templates"><span>✦</span> Templates</button>
+        <button class="nav-item" data-view="business"><span>⚙</span> Profile</button>
+      </nav>
+      <div class="sidebar-card">
+        <span class="card-icon">↗</span>
+        <strong>Evening reminder</strong>
+        <p>Review and send today’s updates before closing.</p>
+        <span class="reminder-time">Every day · 8:00 PM</span>
+      </div>
+      <div class="profile" id="sidebarProfileBtn">
+        <div class="avatar" id="sidebarAvatar">AK</div>
+        <div><strong id="sidebarShopName">Aditya Kirana</strong><span>Shop Owner</span></div>
+      </div>
+    </aside>
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; } 
+    <!-- MOBILE NAVIGATION (FIXED IDs DATA MATRIX) -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-item active" data-view="dashboard"><div>⌂</div><span>Overview</span></button>
+      <button class="mobile-nav-item" data-view="customers"><div>♙</div><span>Customers</span></button>
+      <button class="mobile-nav-item" data-view="transactions"><div>▤</div><span>Logs</span></button>
+      <button class="mobile-nav-item" data-view="templates"><div>✦</div><span>Templates</span></button>
+      <button class="mobile-nav-item" data-view="business"><div>⚙</div><span>Profile</span></button>
+    </nav>
 
-body { 
-  margin: 0; 
-  background: var(--canvas); 
-  color: var(--ink); 
-  font-family: 'DM Sans', sans-serif; 
-  font-size: 14px; 
-}
+    <!-- MAIN INTERFACE BODY -->
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="todayLabel">TODAY</p>
+          <h1 id="welcomeOwner">Good evening, Aditya <span>👋</span></h1>
+          <p class="subtitle">Keep your ledger accurate and business flowing smoothly.</p>
+        </div>
+        <div class="top-actions">
+          <button class="primary-button" id="globalAddTxBtn"><span>＋</span> Add Transaction</button>
+        </div>
+      </header>
 
-/* --- APP MAIN LAYOUT FRAMEWORK --- */
-.app-shell { 
-  min-height: 100vh; 
-  display: grid; 
-  grid-template-columns: 244px 1fr; 
-}
+      <!-- VIEW: DASHBOARD OVERVIEW -->
+      <div id="view-dashboard" class="app-view active">
+        <section class="stats" aria-label="Today's summary">
+          <article class="stat-card featured">
+            <div class="stat-label"><span class="stat-icon rupee">₹</span> Today's Net Change</div>
+            <strong id="dashTodayNet">₹0</strong>
+            <p>Added across <b id="dashTodayCount">0 logs</b> today</p>
+            <div class="spark-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-label"><span class="stat-icon people">♙</span> Total Collection Today</div>
+            <strong id="dashTodayCollection" style="color: var(--green);">₹0</strong>
+            <p>Total cash inputs received</p>
+          </article>
+          <article class="stat-card">
+            <div class="stat-label"><span class="stat-icon message">◉</span> Active Book Balances</div>
+            <strong id="dashTotalOutstanding">₹0</strong>
+            <p>Total outstanding balance</p>
+          </article>
+        </section>
 
-.sidebar { 
-  position: sticky; 
-  top: 0; 
-  height: 100vh; 
-  background: #fff; 
-  border-right: 1px solid var(--line); 
-  padding: 28px 18px 22px; 
-  display: flex; 
-  flex-direction: column; 
-}
+        <section class="workspace-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div><h2>Recent Activity</h2><p>Latest ledger movements</p></div>
+              <button class="text-button" id="dashViewAllTxBtn">View all <span>→</span></button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 95px; text-align: left; padding-left: 16px;">Action</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th style="text-align: right; padding-right: 16px;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="dashTxBody"></tbody>
+              </table>
+              <div class="empty-state" id="dashTxEmpty">
+                <div>₹</div><h3>No transactions logged yet</h3><p>Your data logs will appear right here.</p>
+              </div>
+            </div>
+          </article>
 
-.mobile-bottom-nav { display: none; }
+          <aside class="panel send-panel">
+            <div class="send-header">
+              <div class="whatsapp-logo">◔</div>
+              <div><h2>WhatsApp Dispatcher</h2><p id="readyCount">0 active today</p></div>
+            </div>
+            <div class="message-preview">
+              <div class="preview-label">
+                <span>MESSAGE PREVIEW</span>
+                <div style="position:relative;">
+                  <button type="button" id="previewTemplateDropdownBtn" class="text-button" style="margin:0; font-size:11px;">Template ▾</button>
+                  <div class="dropdown-menu" id="previewTemplateMenu"></div>
+                </div>
+              </div>
+              <div class="bubble" id="messagePreview">Select a customer below to review message string.</div>
+            </div>
+            <div class="upi-ready"><span>₹</span><div><strong>Payment link status</strong><p id="upiStatusText">UPI ready</p></div></div>
+            <label class="select-label" for="recipientSelect">RECIPIENT</label>
+            <div class="select-wrap">
+              <span class="recipient-avatar" id="recipientAvatar">—</span>
+              <select id="recipientSelect"></select>
+            </div>
+            <button class="whatsapp-button" id="sendWhatsAppBtn"><span>◔</span> Launch WhatsApp Link</button>
+          </aside>
+        </section>
+      </div>
 
-.brand { 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  padding: 0 8px 34px; 
-  color: var(--ink); 
-  font: 800 20px 'Manrope'; 
-  text-decoration: none; 
-}
+      <!-- VIEW: CUSTOMER MASTER DIRECTORY -->
+      <div id="view-customers" class="app-view">
+        <article class="panel">
+          <div class="panel-header filters-header">
+            <div><h2>Customer Master Directory</h2><p id="customerDirectoryCount">0 Total Accounts</p></div>
+            <div class="header-search-actions">
+              <input type="text" id="custSearchInput" placeholder="Search customer..." class="view-search-input" />
+              <select id="custSortSelect" class="view-sort-select">
+                <option value="name">Alphabetical</option>
+                <option value="high">Outstanding (High → Low)</option>
+                <option value="low">Outstanding (Low → High)</option>
+                <option value="recent">Recent Activity</option>
+              </select>
+              <button class="primary-button" id="createCustomerQuickBtn">＋ New Customer</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Sr No</th><th>Customer Name</th><th>Mobile Link</th><th>Outstanding Balance</th><th style="text-align:right;">Actions</th></tr></thead>
+              <tbody id="customerTableBody"></tbody>
+            </table>
+            <div class="empty-state" id="customerTableEmpty">
+              <div>♙</div><h3>No accounts match criteria</h3><p>Create or adjust search terms.</p>
+            </div>
+          </div>
+        </article>
+      </div>
 
-.brand-mark { 
-  display: grid; 
-  place-items: center; 
-  width: 34px; 
-  height: 34px; 
-  border-radius: 10px; 
-  background: var(--teal); 
-  color: #fff; 
-  font-size: 18px; 
-}
+      <!-- VIEW: ITEMIZED INDIVIDUAL LEDGER -->
+      <div id="view-ledger" class="app-view">
+        <div style="margin-bottom:15px;"><button class="text-button" id="ledgerBackBtn">← Back to Directory</button></div>
+        <div class="ledger-profile-header">
+          <div>
+            <h2 id="ledgerCustName">Ram Sharma</h2>
+            <p id="ledgerCustPhone" style="color:var(--muted); margin:4px 0 0;">+91 9876543210</p>
+          </div>
+          <div class="top-actions">
+            <a href="#" class="primary-button" id="ledgerCallBtn" style="background:#0284c7; text-decoration:none;">📞 Call</a>
+            <button class="primary-button" id="ledgerWaBtn" style="background:var(--wa);">💬 WhatsApp</button>
+          </div>
+        </div>
+        <section class="stats" style="margin-top:15px;">
+          <article class="stat-card">
+            <div class="stat-label">🔴 Total Debts (+)</div>
+            <strong id="ledgerTotalDebt" style="color:#e11d48;">₹0</strong>
+          </article>
+          <article class="stat-card">
+            <div class="stat-label">🟢 Total Payments (-)</div>
+            <strong id="ledgerTotalCredit" style="color:var(--green);">₹0</strong>
+          </article>
+          <article class="stat-card featured" id="ledgerOutstandingCard">
+            <div class="stat-label" style="color:#fff;">Net Outstanding Balance</div>
+            <strong id="ledgerTotalOutstanding">₹0</strong>
+          </article>
+        </section>
+        <article class="panel" style="margin-top:15px;">
+          <div class="panel-header">
+            <div><h2>Itemized Statement</h2></div>
+            <div class="top-actions">
+              <button class="primary-button" id="ledgerAddDebtBtn" style="background:#e11d48; padding:8px 12px;">＋ Debt</button>
+              <button class="primary-button" id="ledgerAddPaymentBtn" style="background:var(--green); padding:8px 12px;">＋ Payment</button>
+              <button class="secondary-button" id="ledgerPrintBtn" style="margin:0; padding:8px 12px;">🖨️ Print</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Notes</th><th style="color:#e11d48;">Debt (+)</th><th style="color:var(--green);">Credit (-)</th><th>Balance</th><th>Actions</th></tr></thead>
+              <tbody id="ledgerItemsBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
 
-.brand strong { color: var(--teal); }
-.nav { display: grid; gap: 5px; }
+      <!-- VIEW: HISTORICAL LOGS -->
+      <div id="view-transactions" class="app-view">
+        <article class="panel">
+          <div class="panel-header filters-header">
+            <div><h2>Historical Ledger Logs</h2></div>
+            <div class="header-search-actions">
+              <input type="text" id="txSearchInput" placeholder="Filter logs..." class="view-search-input" />
+              <input type="date" id="txDateFilterInput" class="view-sort-select" style="max-width:140px;" />
+              <select id="txTypeFilterSelect" class="view-sort-select">
+                <option value="ALL">All Types</option>
+                <option value="DEBT">🔴 Debts Only</option>
+                <option value="CREDIT">🟢 Payments Only</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Customer</th><th>Description</th><th>Type</th><th>Amount</th><th style="text-align:right;">Actions</th></tr></thead>
+              <tbody id="txGlobalBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
 
-.nav-item { 
-  border: 0; 
-  background: transparent; 
-  color: #69726f; 
-  padding: 11px 13px; 
-  border-radius: 10px; 
-  text-align: left; 
-  font: 600 14px 'DM Sans'; 
-  cursor: pointer; 
-  display: flex; 
-  gap: 13px; 
-  align-items: center; 
-  width: 100%;
-}
+      <!-- VIEW: MESSAGE TEMPLATES -->
+      <div id="view-templates" class="app-view">
+        <article class="panel" style="margin-bottom: 16px; background: #fafbfb; border-color: var(--line);">
+          <div style="padding: 16px 20px;">
+            <h3 style="margin: 0 0 8px 0; font-family: 'Manrope'; font-size: 13px; color: var(--teal); letter-spacing: 0.5px; text-transform: uppercase;">📋 Template Keys Reference Guide</h3>
+            <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--muted); line-height: 1.4;">Use these exact keys in your template blocks below to pull figures dynamically:</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px;">
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Customer Name:</b> <code>{name}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Today's Amount:</b> <code>{today_amount}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Total Outstanding:</b> <code>{total_debt}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Shop Name:</b> <code>{shop_name}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>UPI Address:</b> <code>{upi_id}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>UPI Payment Link:</b> <code>{payment_link}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Date:</b> <code>{date}</code></span>
+            </div>
+          </div>
+        </article>
 
-.nav-item span { font-size: 20px; width: 20px; text-align: center; }
-.nav-item.active, .nav-item:hover { background: #eaf5f2; color: var(--teal); }
+        <article class="panel">
+          <div class="panel-header">
+            <div><h2>Message Templates Workspace</h2></div>
+            <button class="primary-button" id="templateCreateBtn">＋ Custom Template</button>
+          </div>
+          <div style="padding:20px; display:grid; gap:16px;" id="templatesWorkspaceGrid"></div>
+        </article>
+      </div>
 
-.sidebar-card { 
-  margin-top: auto; 
-  background: #f2f8f6; 
-  border: 1px solid #dfede9; 
-  border-radius: 14px; 
-  padding: 17px; 
-}
+      <!-- VIEW: BUSINESS PROFILE -->
+      <div id="view-business" class="app-view">
+        <article class="panel" style="max-width:700px; margin:0 auto;">
+          <div class="panel-header">
+            <div><h2>Business Profile Settings</h2></div>
+          </div>
+          <form id="businessPageForm" style="padding:20px; display:grid; gap:16px;">
+            <div class="form-row">
+              <label>Shop/Business Name<input name="shopName" required /></label>
+              <label>Owner Name<input name="ownerName" required /></label>
+            </div>
+            <div class="form-row">
+              <label>Business ID<div class="id-input"><span>#</span><input name="businessId" required /></div></label>
+              <label>Merchant UPI ID<div class="id-input"><span>₹</span><input name="upiId" /></div></label>
+            </div>
+            <div class="form-row">
+              <label>Merchant Contact Mobile<input name="businessPhone" /></label>
+            </div>
+            <div style="text-align:right;"><button class="primary-button" type="submit" style="padding:12px 28px; width: 100%;">Commit Settings</button></div>
+          </form>
+        </article>
+      </div>
+    </main>
+  </div>
 
-.card-icon { 
-  display: grid; 
-  place-items: center; 
-  width: 30px; 
-  height: 30px; 
-  border-radius: 9px; 
-  background: #d9eee8; 
-  color: var(--teal); 
-  font-size: 18px; 
-  margin-bottom: 12px; 
-}
+  <!-- MODAL: LEDGER ENTRY/TRANSACTION -->
+  <div class="modal-backdrop" id="txModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head"><div><p class="eyebrow" id="txModalEyebrow">LEDGER LOG</p><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
+      <form id="txModalForm">
+        <label>Step 1: Locate Account</label>
+        <input type="text" id="txModalSearchCust" placeholder="🔍 Type complete customer name or phone..." autocomplete="off" />
+        
+        <div id="txModalRecentContainer" style="margin-top:-4px; display:none;">
+          <span style="font-size:10px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px;">OPTIONS:</span>
+          <div id="txModalRecentBadges" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+        </div>
 
-.sidebar-card strong { font-size: 13px; }
-.sidebar-card p { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 7px 0; }
-.reminder-time { color: var(--teal); font-size: 11px; font-weight: 700; }
+        <div id="txModalAccountStatus" class="upi-ready" style="display:none; margin:5px 0 0; background:#f0f9ff; border-color:#bae6fd;">
+          <span>👤</span>
+          <div><strong id="txModalSelectedName">Unlinked</strong><p id="txModalSelectedBalance">Outstanding: ₹0</p></div>
+          <button type="button" class="secondary-button" id="txModalClearCustBtn" style="margin:0; padding:6px 12px; font-size:11px; background:#eaf5f2; color:var(--teal);">Change</button>
+        </div>
 
-.profile { 
-  display: flex; 
-  align-items: center; 
-  gap: 9px; 
-  padding: 20px 5px 0; 
-  margin-top: 16px; 
-  border-top: 1px solid var(--line); 
-  cursor: pointer;
-}
+        <div id="txModalFields" style="display:grid; gap:14px; margin-top:5px;">
+          <div class="form-row">
+            <label>Classification
+              <select name="type" id="txModalTypeSelect">
+                <option value="DEBT" style="color: #e11d48; font-weight: bold;">🔴 Debt (+) Customer Owes Me</option>
+                <option value="CREDIT" style="color: var(--green); font-weight: bold;">🟢 Payment (-) Cash Received</option>
+              </select>
+            </label>
+            <label>Amount (₹)<input name="amount" type="number" min="0.01" step="0.01" required /></label>
+          </div>
+          <div class="form-row">
+            <label>Effective Date<input name="date" type="date" required /></label>
+            <label>Description / Note<input name="description" id="txModalDesc" placeholder="Optional" /></label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="cancel-button" id="txModalCancelBtn">Dismiss</button>
+            <button class="primary-button" type="submit">Commit Log</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </div>
 
-.avatar, .recipient-avatar { 
-  display: grid; 
-  place-items: center; 
-  width: 35px; height: 35px; 
-  border-radius: 50%; 
-  background: #e0a66a; 
-  color: white; 
-  font-size: 11px; 
-  font-weight: 700; 
-}
+  <!-- MODAL: INITIALIZE NEW CUSTOMER -->
+  <div class="modal-backdrop" id="customerQuickModal" aria-hidden="true">
+    <section class="modal" role="dialog" style="max-width:400px;">
+      <div class="modal-head"><div><p class="eyebrow">DIRECTORY</p><h2>Initialize New Account</h2></div><button class="close-modal" id="custQuickCloseBtn">×</button></div>
+      <form id="customerQuickForm">
+        <button type="button" id="mobileDeviceContactImportBtn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:#f0fdf4; border:1px dashed var(--green); color:var(--green); padding:12px; border-radius:10px; font-weight:700; font-family:inherit; cursor:pointer; margin-bottom:5px;">
+          <span>👤</span> Choose from Phone Contacts
+        </button>
+        
+        <label>Customer Full Name<input name="name" id="quickCustNameField" placeholder="Ramesh Sharma" required /></label>
+        <label>WhatsApp Contact Number<div class="phone-input"><span>+91</span><input name="phone" inputmode="numeric" maxlength="10" placeholder="9876543210" required /></div></label>
+        <div class="modal-actions">
+          <button type="button" class="cancel-button" id="custQuickCancelBtn">Cancel</button>
+          <button class="primary-button" type="submit">Save Account</button>
+        </div>
+      </form>
+    </section>
+  </div>
 
-.profile div:nth-child(2) { display: grid; font-size: 12px; }
-.profile div span { color: var(--muted); font-size: 10px; margin-top: 2px; }
+  <!-- MODAL: TEMPLATE WORKSPACE CUSTOMIZATION -->
+  <div class="modal-backdrop" id="templateModal" aria-hidden="true">
+    <section class="modal" role="dialog">
+      <div class="modal-head"><div><p class="eyebrow">DASHBOARD</p><h2 id="templateModalTitle">Modify Template</h2></div><button class="close-modal" id="templateModalCloseBtn">×</button></div>
+      <form id="templateModalForm">
+        <input type="hidden" name="id" />
+        <label>Template Title<input name="title" required /></label>
+        <label>Message Layout<textarea name="body" rows="6" required></textarea></label>
+        <p class="variable-help">Dynamic Strings: <code>{name}</code> <code>{date}</code> <code>{today_amount}</code> <code>{total_debt}</code> <code>{shop_name}</code> <code>{upi_id}</code> <code>{payment_link}</code></p>
+        <div class="modal-actions">
+          <button type="button" class="cancel-button" id="templateModalCancelBtn">Cancel</button>
+          <button class="primary-button" type="submit">Commit Template</button>
+        </div>
+      </form>
+    </section>
+  </div>
 
-main { padding: 30px 40px 18px; min-width: 0; padding-bottom: 40px; }
-.topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;}
-.eyebrow { color: var(--teal); font-size: 10px; font-weight: 800; letter-spacing: 1.4px; margin: 0 0 7px; }
-.topbar h1 { font: 800 25px 'Manrope'; margin: 0; letter-spacing: -.7px; }
-.topbar h1 span { font-size: 22px; }
-.subtitle { margin: 7px 0 0; color: var(--muted); }
-.top-actions { display: flex; gap: 11px; align-items: center; }
-
-.primary-button, .secondary-button, .cancel-button { 
-  border: 0; 
-  border-radius: 10px; 
-  cursor: pointer; 
-  font: 700 13px 'DM Sans'; 
-  padding: 12px 18px;
-}
-
-.primary-button { 
-  background: var(--teal); 
-  color: #fff; 
-  box-shadow: 0 4px 12px rgba(13,118,110,.18); 
-}
-
-.primary-button:hover { background: var(--teal-dark); }
-.primary-button:disabled { background: var(--muted); opacity: 0.6; cursor: not-allowed; }
-
-/* --- PREMIUM FORM INPUTS --- */
-.text-button { 
-  border: 0; 
-  background: transparent; 
-  color: var(--teal); 
-  font: 700 13px 'DM Sans';
-  cursor: pointer; 
-  padding: 6px 12px;
-  border-radius: 8px;
-}
-.text-button:hover {
-  background: #eaf5f2;
-}
-
-.modal input, 
-.modal textarea, 
-.modal select,
-#businessPageForm input,
-#businessPageForm select,
-#txModalSearchCust { 
-  width: 100%; 
-  border: 1px solid #dfe4e2; 
-  border-radius: 10px; 
-  padding: 12px; 
-  font: 500 14px 'DM Sans', sans-serif; 
-  outline: 0; 
-  color: var(--ink); 
-  background: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.modal input:focus, 
-#businessPageForm input:focus,
-#txModalSearchCust:focus { 
-  border-color: var(--teal); 
-  box-shadow: 0 0 0 3px #e3f2ef; 
-}
-
-.id-input { display: flex; border: 1px solid #dfe4e2; border-radius: 10px; overflow: hidden; background: #fff; }
-.id-input span { display: grid; place-items: center; width: 42px; background: #f4f7f6; color: var(--teal); font-weight: 800; border-right: 1px solid #dfe4e2; }
-.id-input input { border: 0 !important; border-radius: 0 !important; }
-
-/* --- METRICS PANELS --- */
-.stats { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 14px; margin: 20px 0; }
-.stat-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 19px 20px; position: relative; overflow: hidden; min-height: 130px; }
-.stat-card.featured { background: linear-gradient(125deg,#0e756d,#0b6862); color: #fff; border: 0; }
-.stat-label { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; color: #66706d; }
-.featured .stat-label, .featured p { color: #d5eae7; }
-.stat-icon { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 8px; background: #e8f3f1; color: var(--teal); font-weight: 800; }
-.featured .stat-icon { background: rgba(255,255,255,.15); color: #fff; }
-.stat-card strong { display: block; font: 800 26px 'Manrope'; margin-top: 10px; }
-.stat-card p { font-size: 11px; color: #89918f; margin: 5px 0 0; }
-
-.spark-bars { position: absolute; right: 17px; bottom: 18px; height: 40px; display: flex; gap: 4px; align-items: flex-end; }
-.spark-bars i { display: block; width: 5px; border-radius: 3px; background: rgba(255,255,255,.23); height: 30%; }
-.spark-bars i:nth-child(2) { height: 55%; }
-.spark-bars i:nth-child(3) { height: 76%; }
-.spark-bars i:nth-child(4) { height: 100%; background: #fff; }
-
-.workspace-grid { display: grid; grid-template-columns: minmax(0,1.65fr) minmax(310px,.75fr); gap: 16px; }
-.panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 16px; }
-.panel-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
-.panel-header p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
-
-.table-wrap { min-height: 200px; position: relative; overflow: auto; }
-table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 12px 20px; color: #9aa19f; font-size: 10px; letter-spacing: .6px; text-transform: uppercase; background: #fafbfb; border-bottom: 1px solid var(--line); }
-td { padding: 14px 20px; border-top: 1px solid #f0f2f1; font-size: 13px; vertical-align: middle; }
-.customer-cell { display: flex; align-items: center; gap: 10px; }
-.customer-cell strong { display: block; color: var(--ink); }
-.customer-cell span { color: var(--muted); font-size: 11px; }
-.amount { font-weight: 700; }
-
-/* --- ACCOUNTING SIGNALS (RED / GREEN) --- */
-.status { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 4px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-.status.sent { background: #e6f6ee; color: #19865b; }
-.status.pending { background: #fde8e8; color: #e11d48; }
-.status i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.row-menu { border: 0; background: transparent; cursor: pointer; color: #87908e; }
-
-/* --- MESSAGING OVERLAYS --- */
-.send-panel { padding: 20px; }
-.send-header { display: flex; align-items: center; gap: 11px; margin-bottom: 15px; }
-.whatsapp-logo { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #ddf7e8; color: var(--wa); font-size: 22px; font-weight: bold; }
-.message-preview { background: #f5faf8; border: 1px solid #e0eee9; border-radius: 12px; padding: 14px; position: relative; }
-.preview-label { display: flex; justify-content: space-between; color: #8c9693; font-size: 9px; letter-spacing: .8px; font-weight: 800; align-items: center; }
-
-.bubble { position: relative; background: #fff; border-radius: 9px; margin-top: 10px; padding: 12px; font-size: 12px; line-height: 1.5; white-space: pre-line; box-shadow: 0 2px 7px rgba(23,33,31,.06); }
-.select-label { display: block; color: #8d9694; font-size: 9px; font-weight: 800; letter-spacing: .8px; margin: 15px 0 6px; }
-.select-wrap { height: 46px; border: 1px solid var(--line); border-radius: 10px; display: flex; align-items: center; padding: 6px 12px; gap: 9px; background: #fff; }
-.select-wrap select { border: 0; background: transparent; flex: 1; min-width: 0; font: 600 13px 'DM Sans'; outline: 0; color: var(--ink); cursor: pointer; }
-.whatsapp-button { width: 100%; margin-top: 12px; border: 0; border-radius: 10px; background: var(--wa); color: #fff; padding: 13px; font: 700 13px 'DM Sans'; cursor: pointer; }
-
-/* --- TOASTS & ALERTS MODIFIERS --- */
-.toast { position: fixed; left: 50%; bottom: 85px; transform: translateX(-50%) translateY(100px); display: flex; align-items: center; gap: 10px; background: #173d37; color: white; border-radius: 12px; padding: 12px 20px; box-shadow: 0 12px 35px rgba(0,0,0,.2); opacity: 0; transition: .25s ease-out; z-index: 100; width: calc(100% - 32px); max-width: 400px; }
-.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-.toast > span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #2ca875; font-size: 12px; }
-
-.modal-backdrop { position: fixed; inset: 0; background: rgba(15,28,25,.5); display: none; place-items: center; padding: 16px; z-index: 200; backdrop-filter: blur(4px); }
-.modal-backdrop.open { display: grid; }
-.modal { width: min(480px, 100%); background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto; }
-.modal label { display: grid; gap: 6px; font-size: 11px; font-weight: 700; color: #55605d; margin-bottom: 4px; }
-.modal-head h2 { font-size: 18px; font-family: 'Manrope'; margin: 0; }
-.close-modal { border: 0; background: #f1f4f3; border-radius: 50%; width: 32px; height: 32px; font-size: 20px; cursor: pointer; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
-
-.app-view { display: none; }
-.app-view.active { display: block; }
-.filters-header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
-.header-search-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
-
-.ledger-profile-header { background: #fff; border: 1px solid var(--line); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; }
-.dropdown-menu { position: absolute; right: 0; top: 100%; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); z-index: 10; display: none; min-width: 185px; margin-top: 4px; }
-.dropdown-menu.show { display: block; }
-.dropdown-item { width: 100%; border: 0; background: transparent; padding: 10px 12px; text-align: left; font-size: 13px; cursor: pointer; }
-
-.quick-row-send-btn.dispatched-state {
-  background: #f0f2f1 !important;
-  color: #8a9491 !important;
-  box-shadow: none !important;
-  opacity: 0.75;
-}
-
-.variable-help code {
-  background: #edf5f2;
-  color: var(--teal);
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-size: 11px;
-}
-
-/* --- EXPLICIT PHONE BREAKPOINTS --- */
-@media(max-width: 720px) {
-  .app-shell { display: block; }
-  .sidebar { display: none !important; }
-
-  .mobile-bottom-nav {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 64px;
-    background: #ffffff;
-    border-top: 1px solid var(--line);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
-    z-index: 99;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .mobile-nav-item {
-    background: transparent;
-    border: 0;
-    color: #8a9491;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: inherit;
-    font-size: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    flex: 1;
-    height: 100%;
-    gap: 2px;
-  }
-
-  /* Prevent child text blocks from blocking touch vectors */
-  .mobile-nav-item div, 
-  .mobile-nav-item span { 
-    pointer-events: none; 
-  }
-
-  .mobile-nav-item div { font-size: 20px; line-height: 1; height: 22px; }
-  .mobile-nav-item.active { color: var(--teal); }
-
-  main { padding: 16px 16px 85px 16px; }
-  .topbar { flex-direction: column; align-items: stretch; gap: 14px; }
-  .topbar h1 { font-size: 20px; }
-  .subtitle { font-size: 12px; }
-  .primary-button { width: 100%; text-align: center; justify-content: center; padding: 14px; font-size: 14px; }
-
-  .stats { grid-template-columns: 1fr; gap: 12px; }
-  .stat-card { min-height: 105px; padding: 16px; }
-  .workspace-grid { grid-template-columns: 1fr; gap: 16px; }
-
-  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { min-width: 580px; }
-  td, th { padding: 12px 14px; font-size: 12px; }
-
-  .form-row { grid-template-columns: 1fr; gap: 12px; }
-  .header-search-actions { flex-direction: column; align-items: stretch; }
-  .view-search-input, .view-sort-select { width: 100% !important; max-width: none !important; }
-
-  .ledger-profile-header { flex-direction: column; align-items: stretch; gap: 12px; }
-  .ledger-profile-header .top-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-  .modal {
-    width: 100%;
-    border-radius: 16px 16px 0 0;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 85vh;
-    animation: slideUpMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    padding: 20px 16px;
-  }
-}
-
-@media print {
-  body { background: #fff; color: #000; font-size: 12px; }
-  .sidebar, .mobile-bottom-nav, .topbar, .top-actions, .primary-button, .secondary-button, .row-menu, .autosave { display: none !important; }
-  .app-shell { display: block; }
-  main { padding: 0; }
-  .panel { border: 0; box-shadow: none; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { border: 1px solid #000 !important; padding: 6px 10px !important; }
-}
+  <!-- TOAST FEEDBACK MODULE -->
+  <div class="toast" id="toast"><span>✓</span><div><strong id="toastTitle">Success</strong><p id="toastMessage">Done.</p></div></div>
+  <script src="app.js"></script>
+</body>
+</html>
