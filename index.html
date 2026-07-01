@@ -174,15 +174,15 @@
         </div>
         <section class="stats" style="margin-top:15px;">
           <article class="stat-card">
-            <div class="stat-label">Debts (+)</div>
+            <div class="stat-label">🔴 Total Debts (+)</div>
             <strong id="ledgerTotalDebt" style="color:#e11d48;">₹0</strong>
           </article>
           <article class="stat-card">
-            <div class="stat-label">Payments (-)</div>
+            <div class="stat-label">🟢 Total Payments (-)</div>
             <strong id="ledgerTotalCredit" style="color:var(--green);">₹0</strong>
           </article>
           <article class="stat-card featured" id="ledgerOutstandingCard">
-            <div class="stat-label" style="color:#fff;">Outstanding</div>
+            <div class="stat-label" style="color:#fff;">Net Outstanding Balance</div>
             <strong id="ledgerTotalOutstanding">₹0</strong>
           </article>
         </section>
@@ -214,8 +214,8 @@
               <input type="date" id="txDateFilterInput" class="view-sort-select" style="max-width:140px;" />
               <select id="txTypeFilterSelect" class="view-sort-select">
                 <option value="ALL">All</option>
-                <option value="DEBT">Debts</option>
-                <option value="CREDIT">Payments</option>
+                <option value="DEBT">🔴 Debts Only</option>
+                <option value="CREDIT">🟢 Payments Only</option>
               </select>
             </div>
           </div>
@@ -230,6 +230,22 @@
 
       <!-- VIEW: TEMPLATES -->
       <div id="view-templates" class="app-view">
+        <article class="panel" style="margin-bottom: 16px; background: #fafbfb; border-color: var(--line);">
+          <div style="padding: 16px 20px;">
+            <h3 style="margin: 0 0 8px 0; font-family: 'Manrope'; font-size: 13px; color: var(--teal); letter-spacing: 0.5px; text-transform: uppercase;">📋 Template Variable Reference Guide</h3>
+            <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--muted); line-height: 1.4;">Copy and paste these exact shortcut tags into your text blocks below to pull current customer totals dynamically:</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px;">
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Customer Name:</b> <code>{name}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Today's Entry Value:</b> <code>{today_amount}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Net Total Outstanding:</b> <code>{total_debt}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Your Shop Name:</b> <code>{shop_name}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Active UPI Address:</b> <code>{upi_id}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Dynamic UPI Link:</b> <code>{payment_link}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Current Date String:</b> <code>{date}</code></span>
+            </div>
+          </div>
+        </article>
+
         <article class="panel">
           <div class="panel-header">
             <div><h2>Message Templates</h2></div>
@@ -269,7 +285,7 @@
     <section class="modal" role="dialog" aria-modal="true">
       <div class="modal-head"><div><p class="eyebrow" id="txModalEyebrow">LEDGER LOG</p><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
       <form id="txModalForm">
-        <label>Step 1: Locate Account<input type="text" id="txModalSearchCust" placeholder="🔍 Type complete customer name or phone..." autocomplete="off" /></label>
+        <label>Step 1: Locate Account<input type="text" id="txModalSearchCust" placeholder="🔍 Type customer name or phone..." autocomplete="off" /></label>
         
         <div id="txModalRecentContainer" style="margin-top:-4px; display:none;">
           <span style="font-size:10px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px;">OPTIONS:</span>
@@ -286,8 +302,8 @@
           <div class="form-row">
             <label>Classification
               <select name="type" id="txModalTypeSelect">
-                <option value="DEBT">Debt (+)</option>
-                <option value="CREDIT">Payment (-)</option>
+                <option value="DEBT" style="color: #e11d48; font-weight: bold;">🔴 Debt (+) Customer Owes Me</option>
+                <option value="CREDIT" style="color: var(--green); font-weight: bold;">🟢 Payment (-) Cash Received</option>
               </select>
             </label>
             <label>Amount (₹)<input name="amount" type="number" min="0.01" step="0.01" required /></label>
