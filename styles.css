@@ -12,6 +12,12 @@
   --shadow:0 8px 28px rgba(26,57,51,.07); 
 }
 
+/* Fix: Freeze layer utility tag to stop background scroll bleeds */
+body.modal-open-freeze {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; } 
 
 body { 
@@ -205,6 +211,7 @@ main { padding: 30px 40px 18px; min-width: 0; padding-bottom: 40px; }
 .stat-card.featured { background: linear-gradient(125deg,#0e756d,#0b6862); color: #fff; border: 0; }
 .stat-label { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; color: #66706d; }
 .featured .stat-label, .featured p { color: #d5eae7; }
+.toggle-ready-info { background: #f0fdf4; padding: 8px 12px; border-radius: 8px; border: 1px solid #bbf7d0; display: flex; gap: 8px; font-size: 12px; margin-top: 10px; }
 .stat-icon { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 8px; background: #e8f3f1; color: var(--teal); font-weight: 800; }
 .featured .stat-icon { background: rgba(255,255,255,.15); color: #fff; }
 .stat-card strong { display: block; font: 800 26px 'Manrope'; margin-top: 10px; }
@@ -263,15 +270,18 @@ td { padding: 14px 20px; border-top: 1px solid #f0f2f1; font-size: 13px; vertica
 .close-modal { border: 0; background: #f1f4f3; border-radius: 50%; width: 32px; height: 32px; font-size: 20px; cursor: pointer; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
+.upi-ready { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); background: var(--canvas); border-radius: 10px; padding: 10px 14px; margin-top: 10px; font-size: 13px; }
+
 .app-view { display: none; }
 .app-view.active { display: block; }
 .filters-header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
 .header-search-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
 
 .ledger-profile-header { background: #fff; border: 1px solid var(--line); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; }
-.dropdown-menu { position: absolute; right: 0; top: 100%; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); z-index: 10; display: none; min-width: 185px; margin-top: 4px; }
+.dropdown-menu { position: absolute; right: 0; top: 100%; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); z-index: 101; display: none; min-width: 185px; margin-top: 4px; }
 .dropdown-menu.show { display: block; }
-.dropdown-item { width: 100%; border: 0; background: transparent; padding: 10px 12px; text-align: left; font-size: 13px; cursor: pointer; }
+.dropdown-item { width: 100%; border: 0; background: transparent; padding: 10px 12px; text-align: left; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f5f7f6; }
+.dropdown-item:hover { background: #f0fdf4; color: var(--teal); }
 
 .quick-row-send-btn.dispatched-state {
   background: #f0f2f1 !important;
@@ -327,7 +337,6 @@ td { padding: 14px 20px; border-top: 1px solid #f0f2f1; font-size: 13px; vertica
     pointer-events: auto !important;
   }
 
-  /* Critical Fix: Redirects inner element clicks to button parent layout */
   .mobile-nav-item * { 
     pointer-events: none !important; 
   }
