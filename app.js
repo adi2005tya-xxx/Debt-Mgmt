@@ -121,14 +121,11 @@ function compileMessageString(phone, templateBody) {
     .replaceAll('{payment_link}', buildPaymentLink(phone, metrics.outstanding));
 }
 
-// --- UPDATE MULTI-VIEW PORT CONTROLLER FOR ALL NAVIGATION ELEMENTS ---
 function navigateToView(viewId) {
   state.currentView = viewId;
   $$('.app-view').forEach(v => v.classList.remove('active'));
   
-  // Clean desktop states highlights
   $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === viewId));
-  // Clean mobile states highlights 
   $$('.mobile-nav-item').forEach(m => m.classList.toggle('active', m.dataset.view === viewId));
   
   $(`#view-${viewId}`).classList.add('active');
@@ -151,7 +148,7 @@ function renderCurrentView() {
   }
 }
 
-// --- RENDERING DYNAMIC LIST CORES ---
+// --- RENDERING PIPELINES WITH RED / GREEN COLOR CODING OVERHAUL ---
 function renderDashboardView() {
   const aggs = getSystemAggregateBalances();
   $('#dashTodayNet').textContent = `₹${money(aggs.todayNetChange)}`;
@@ -165,17 +162,23 @@ function renderDashboardView() {
   $('#dashTxBody').innerHTML = sortedTx.map(t => {
     const cust = state.customers[t.customerPhone] || { name: 'Unknown', phone: t.customerPhone };
     const isSent = t.sent === true;
+    const isDebt = t.type === 'DEBT';
     
     return `<tr>
       <td>
-        <button class="primary-button quick-row-send-btn ${isSent ? 'dispatched-state' : ''}" data-txid="${t.id}" data-phone="${cust.phone}" style="padding: 6px 10px; font-size: 11px; margin:0; width:100%; text-align:center; background: ${isSent ? '#f0f2f1' : 'var(--wa)'}; box-shadow: none;">
+        <button class="primary-button quick-row-send-btn ${isSent ? 'dispatched-state' : ''}" data-txid="${t.id}" data-phone="${cust.phone}" style="padding: 6px 10px; font-size: 11px; margin:0; width:100%; text-align:center; background: ${isSent ? '#f0f2f1' : 'var(--wa)'}; box-shadow: none; color: ${isSent ? '#8a9491' : '#fff'};">
           ${isSent ? '✓ Sent' : '⚡ Send'}
         </button>
       </td>
       <td><strong>${escapeHtml(cust.name)}</strong></td>
       <td>${formatDate(t.date)}</td>
-      <td><span class="status ${t.type === 'DEBT' ? 'pending' : 'sent'}">${t.type}</span></td>
-      <td class="amount">₹${money(t.amount)}</td>
+      <td>
+        <!-- Dynamically render RED for Debt / GREEN for Payment -->
+        <span class="status ${isDebt ? 'pending' : 'sent'}">
+          <i></i>${isDebt ? '🔴 DEBT' : '🟢 PAYMENT'}
+        </span>
+      </td>
+      <td class="amount" style="color: ${isDebt ? '#e11d48' : 'var(--green)'};">₹${money(t.amount)}</td>
     </tr>`;
   }).join('');
 
@@ -193,7 +196,6 @@ function renderDashboardView() {
     }).join('');
     updateDashboardMessagePreview();
   }
-  $('#upiStatusText').textContent = state.business.upiId ? `Active UPI ID: ${state.business.upiId}` : 'No UPI Set Up';
 }
 
 function updateDashboardMessagePreview() {
@@ -254,9 +256,9 @@ function renderCustomerLedgerView() {
     return `<tr>
       <td>${formatDate(t.date)}</td>
       <td>${escapeHtml(t.description || 'Reference entry')}</td>
-      <td style="color:#e11d48;">${t.type === 'DEBT' ? '₹' + money(t.amount) : '—'}</td>
-      <td style="color:var(--green);">${t.type === 'CREDIT' ? '₹' + money(t.amount) : '—'}</td>
-      <td class="amount">₹${money(runningBal)}</td>
+      <td style="color:#e11d48; font-weight:700;">${t.type === 'DEBT' ? '₹' + money(t.amount) : '—'}</td>
+      <td style="color:var(--green); font-weight:700;">${t.type === 'CREDIT' ? '₹' + money(t.amount) : '—'}</td>
+      <td class="amount" style="font-weight: 800;">₹${money(runningBal)}</td>
       <td><button class="row-menu delete-tx-btn" data-id="${t.id}" style="color:#e11d48;">×</button></td>
     </tr>`;
   }).join('');
@@ -276,12 +278,15 @@ function renderTransactionsGlobalView() {
 
   $('#txGlobalBody').innerHTML = list.map(t => {
     const cust = state.customers[t.customerPhone] || { name: 'Deleted Profile', phone: t.customerPhone };
+    const isDebt = t.type === 'DEBT';
     return `<tr>
       <td>${formatDate(t.date)}</td>
       <td><strong>${escapeHtml(cust.name)}</strong></td>
       <td>${escapeHtml(t.description || '—')}</td>
-      <td><span class="status ${t.type === 'DEBT' ? 'pending' : 'sent'}">${t.type}</span></td>
-      <td class="amount">₹${money(t.amount)}</td>
+      <td>
+        <span class="status ${isDebt ? 'pending' : 'sent'}">${isDebt ? '🔴 DEBT' : '🟢 PAYMENT'}</span>
+      </td>
+      <td class="amount" style="color: ${isDebt ? '#e11d48' : 'var(--green)'};">₹${money(t.amount)}</td>
       <td style="text-align:right;"><button class="row-menu delete-tx-btn" data-id="${t.id}">🗑️</button></td>
     </tr>`;
   }).join('');
@@ -294,7 +299,7 @@ function renderTemplatesWorkspaceView() {
     return `<div class="sidebar-card" style="background:#fff; border: 1px solid ${isActive ? 'var(--teal)' : 'var(--line)'}; margin:0; display:grid; gap:8px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <strong>${escapeHtml(t.title)}</strong>
-        <span class="status ${isActive ? 'sent' : 'pending'}">${isActive ? 'Active' : 'Standby'}</span>
+        <span class="status ${isActive ? 'sent' : 'pending'}" style="${isActive ? '' : 'background:#f0f3f2; color:var(--muted);'}">${isActive ? 'Active Default' : 'Standby'}</span>
       </div>
       <pre style="white-space:pre-wrap; background:var(--canvas); padding:10px; border-radius:8px; font-size:11px; margin:4px 0; font-family:inherit;">${escapeHtml(t.body)}</pre>
       <div style="display:flex; gap:8px; justify-content:flex-end;">
@@ -357,17 +362,23 @@ function hydrateRecentCustomerBadges() {
   $('#txModalRecentBadges').innerHTML = badgesHtml + `<button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="" style="padding:4px 10px; font-size:11px; background:var(--ink);">＋ New Account</button>`;
 }
 
-// --- INITIALIZE LIFECYCLE ROUTINES ---
+// --- MOUNTED INITIALIZATION ROUTINES ---
 document.addEventListener('DOMContentLoaded', () => {
-  // ATTACH CORE VIEW LINK TO ALL NAVIGATION CLASSIFICATIONS
-  $$('.nav-item, .mobile-nav-item').forEach(btn => {
-    btn.addEventListener('click', () => navigateToView(btn.dataset.view));
+  // FIXED TOUCH BAR NAVIGATION LISTENERS
+  const navButtons = document.querySelectorAll('.nav-item, .mobile-bottom-nav button, .mobile-nav-item');
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const targetView = btn.getAttribute('data-view');
+      if (targetView) navigateToView(targetView);
+    });
   });
 
   $('#navBrand').addEventListener('click', (e) => { e.preventDefault(); navigateToView('dashboard'); });
   $('#sidebarProfileBtn').addEventListener('click', () => navigateToView('business'));
 
-  // Table Row Quick Send Column Dispatch Click Listeners
+  // Quick Row Send Column Actions Listener Hooks
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('quick-row-send-btn')) {
       const txId = e.target.dataset.txid;
@@ -378,6 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
         targetTx.sent = true;
         saveToStorage();
         e.target.classList.add('dispatched-state');
+        e.target.style.background = '#f0f2f1';
+        e.target.style.color = '#8a9491';
         e.target.textContent = '✓ Sent';
       }
       
@@ -386,10 +399,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Native smartphone mobile book sync handler
   $('#mobileDeviceContactImportBtn').addEventListener('click', async () => {
     if (!navigator.contacts || !navigator.contacts.select) {
-      showToast('Notice', 'Smartphone platform prevents direct address logs. Fill metrics manually inside inputs.');
+      showToast('Notice', 'Smartphone permissions block reading APIs. Fill fields manually below.');
       return;
     }
     try {
@@ -435,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#ledgerAddPaymentBtn').addEventListener('click', () => openTransactionModal(state.selectedLedgerCustomerPhone, 'CREDIT'));
   $('#ledgerPrintBtn').addEventListener('click', () => { window.print(); });
 
-  // STRICT INPUT CUSTOMER SELECTION LOOKUP MODAL STRATEGY
+  // STRICT LOOKUP MATCH CONTROL ENGINE
   $('#txModalSearchCust').addEventListener('input', (e) => {
     const txt = e.target.value.trim();
     if (!txt) {
@@ -443,9 +455,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    if (/^\d{10}$/.test(txt) && state.customers[txt]) {
-      openTransactionModal(txt, $('#txModalTypeSelect').value);
-      return;
+    if (/^\d{11}$|^\d{10}$/.test(txt)) {
+      const formattedNumber = txt.slice(-10);
+      if (state.customers[formattedNumber]) {
+        openTransactionModal(formattedNumber, $('#txModalTypeSelect').value);
+        return;
+      }
     }
     
     const searchMatches = Object.values(state.customers).filter(c => c.name.toLowerCase().includes(txt.toLowerCase()));
@@ -580,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentIndex !== -1 && currentIndex < recipientSelect.options.length - 1) {
       recipientSelect.selectedIndex = currentIndex + 1;
       updateDashboardMessagePreview();
-      showToast('Queue Advanced', 'Next statements statement compiled!');
+      showToast('Queue Advanced', 'Next statement compiled!');
     }
   }
 
