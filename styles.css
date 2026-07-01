@@ -294,7 +294,7 @@ td { padding: 14px 20px; border-top: 1px solid #f0f2f1; font-size: 13px; vertica
   .sidebar { display: none !important; }
 
   .mobile-bottom-nav {
-    display: flex;
+    display: flex !important;
     justify-content: space-around;
     align-items: center;
     position: fixed;
@@ -305,7 +305,7 @@ td { padding: 14px 20px; border-top: 1px solid #f0f2f1; font-size: 13px; vertica
     background: #ffffff;
     border-top: 1px solid var(--line);
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
-    z-index: 99;
+    z-index: 999;
     padding-bottom: env(safe-area-inset-bottom);
   }
 
@@ -324,16 +324,16 @@ td { padding: 14px 20px; border-top: 1px solid #f0f2f1; font-size: 13px; vertica
     flex: 1;
     height: 100%;
     gap: 2px;
+    pointer-events: auto !important;
   }
 
-  /* Prevent child text blocks from blocking touch vectors */
-  .mobile-nav-item div, 
-  .mobile-nav-item span { 
-    pointer-events: none; 
+  /* Critical Fix: Redirects inner element clicks to button parent layout */
+  .mobile-nav-item * { 
+    pointer-events: none !important; 
   }
 
   .mobile-nav-item div { font-size: 20px; line-height: 1; height: 22px; }
-  .mobile-nav-item.active { color: var(--teal); }
+  .mobile-nav-item.active { color: var(--teal) !important; font-weight: 700; }
 
   main { padding: 16px 16px 85px 16px; }
   .topbar { flex-direction: column; align-items: stretch; gap: 14px; }
