@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0f766e" />
-  <title>KhataFlow V2 — Mobile Ledger Manager</title>
+  <title>CredTrack — Mobile Ledger Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
@@ -15,8 +15,8 @@
     <!-- DESKTOP SIDEBAR -->
     <aside class="sidebar">
       <a class="brand" href="#" id="navBrand">
-        <span class="brand-mark">K</span>
-        <span><strong>Khata</strong>Flow</span>
+        <span class="brand-mark">C</span>
+        <span><strong>Cred</strong>Track</span>
       </a>
       <nav class="nav" aria-label="Main navigation">
         <button class="nav-item active" data-view="dashboard"><span>⌂</span> Overview</button>
@@ -90,11 +90,11 @@
               <table>
                 <thead>
                   <tr>
+                    <th style="width: 95px; text-align: left;">Action</th>
                     <th>Customer</th>
                     <th>Date</th>
                     <th>Type</th>
                     <th>Amount</th>
-                    <th style="text-align:right;">Quick Send</th>
                   </tr>
                 </thead>
                 <tbody id="dashTxBody"></tbody>
@@ -269,7 +269,7 @@
     <section class="modal" role="dialog" aria-modal="true">
       <div class="modal-head"><div><p class="eyebrow" id="txModalEyebrow">LEDGER LOG</p><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
       <form id="txModalForm">
-        <label>Step 1: Locate Account<input type="text" id="txModalSearchCust" placeholder="🔍 Type customer name or phone..." autocomplete="off" /></label>
+        <label>Step 1: Locate Account<input type="text" id="txModalSearchCust" placeholder="🔍 Type complete customer name or phone..." autocomplete="off" /></label>
         
         <div id="txModalRecentContainer" style="margin-top:-4px; display:none;">
           <span style="font-size:10px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px;">OPTIONS:</span>
