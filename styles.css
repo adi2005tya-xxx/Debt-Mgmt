@@ -326,6 +326,12 @@ td { padding: 14px 20px; border-top: 1px solid #f0f2f1; font-size: 13px; vertica
     gap: 2px;
   }
 
+  /* Prevent child text blocks from blocking touch vectors */
+  .mobile-nav-item div, 
+  .mobile-nav-item span { 
+    pointer-events: none; 
+  }
+
   .mobile-nav-item div { font-size: 20px; line-height: 1; height: 22px; }
   .mobile-nav-item.active { color: var(--teal); }
 
