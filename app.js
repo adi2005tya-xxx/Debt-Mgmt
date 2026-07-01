@@ -1,7 +1,6 @@
 // --- CORES & SYSTEM CONTEXT ENGINE ---
 const TODAY = new Date().toISOString().slice(0, 10);
 
-// Default Built-in Storage Templates
 const CORE_TEMPLATES = [
   { id: 'daily_reminder', title: '⭐ Daily Reminder', body: `Namaste {name} ji,\n\nToday's ledger entry is *₹{today_amount}*.\nYour net outstanding ledger balance is *₹{total_debt}*.\n\nDate: {date}\nThank you,\n{shop_name}` },
   { id: 'payment_reminder', title: 'Payment Reminder', body: `Namaste {name} ji,\n\nThis is a friendly reminder regarding your outstanding balance of *₹{total_debt}*.\n\nYou can clear it directly via UPI click link:\n{payment_link}\nUPI Address: {upi_id}\n\nThank you for your business,\n{shop_name}` },
@@ -9,7 +8,6 @@ const CORE_TEMPLATES = [
   { id: 'payment_received', title: 'Payment Received', body: `Namaste {name} ji,\n\nWe have successfully received and accounted your payment allocation of *₹{today_amount}* on {date}.\n\nYour remaining unpaid balance is *₹{total_debt}*.\n\nLogged by: {shop_name}` }
 ];
 
-// Structural Client V2 Database State Restoration Engine
 const state = {
   customers: JSON.parse(localStorage.getItem('kf_v2_customers') || '{}'), 
   transactions: JSON.parse(localStorage.getItem('kf_v2_transactions') || '[]'),
@@ -71,13 +69,7 @@ function getCustomerMetrics(phone) {
     if (!lastTxDate || t.date > lastTxDate) lastTxDate = t.date;
   });
 
-  return {
-    totalDebt,
-    totalCredit,
-    outstanding: totalDebt - totalCredit,
-    todayAmount,
-    lastTxDate
-  };
+  return { totalDebt, totalCredit, outstanding: totalDebt - totalCredit, todayAmount, lastTxDate };
 }
 
 function getSystemAggregateBalances() {
@@ -102,16 +94,14 @@ function getSystemAggregateBalances() {
   return { systemOutstanding, totalCollectionToday, todayNetChange, todayCount };
 }
 
-// --- WHATSAPP & UPI BUILD ENGINES ---
 function buildPaymentLink(phone, amount) {
   if (!state.business.upiId) return '';
-  const cust = state.customers[phone];
   const params = new URLSearchParams({
     pa: state.business.upiId,
     pn: state.business.shopName,
     am: Math.max(0, amount).toFixed(2),
     cu: 'INR',
-    tn: `Statement settlement for ${cust ? cust.name : 'Customer'}`
+    tn: `Payment request - ${state.business.shopName}`
   });
   return `upi://pay?${params.toString()}`;
 }
@@ -132,18 +122,18 @@ function compileMessageString(phone, templateBody) {
     .replaceAll('{payment_link}', buildPaymentLink(phone, metrics.outstanding));
 }
 
-// --- SINGLE PAGE VIEW ROUTER ---
+// --- VIEW NAVIGATION ROUTER CONTROLLER ---
 function navigateToView(viewId) {
   state.currentView = viewId;
   $$('.app-view').forEach(v => v.classList.remove('active'));
-  $$('.nav-item').forEach(n => {
-    n.classList.toggle('active', n.dataset.view === viewId);
-  });
+  $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === viewId));
+  $$('.mobile-nav-item').forEach(m => m.classList.toggle('active', m.dataset.view === viewId));
+  
   $(`#view-${viewId}`).classList.add('active');
+  window.scrollTo(0, 0);
   renderCurrentView();
 }
 
-// --- CORE APP RENDERING ROUTER ---
 function renderCurrentView() {
   $('#sidebarAvatar').textContent = initials(state.business.ownerName || 'AK');
   $('#sidebarShopName').textContent = state.business.shopName;
@@ -159,11 +149,11 @@ function renderCurrentView() {
   }
 }
 
-// --- VIEW WRITERS ---
+// --- RENDER RE-WRITERS WITH RECENT ACTIVITY SELECTION UPDATES ---
 function renderDashboardView() {
   const aggs = getSystemAggregateBalances();
   $('#dashTodayNet').textContent = `₹${money(aggs.todayNetChange)}`;
-  $('#dashTodayCount').textContent = `${aggs.todayCount} ${aggs.todayCount === 1 ? 'log' : 'logs'}`;
+  $('#dashTodayCount').textContent = `${aggs.todayCount} logs`;
   $('#dashTodayCollection').textContent = `₹${money(aggs.totalCollectionToday)}`;
   $('#dashTotalOutstanding').textContent = `₹${money(aggs.systemOutstanding)}`;
 
@@ -171,42 +161,41 @@ function renderDashboardView() {
   $('#dashTxEmpty').style.display = sortedTx.length ? 'none' : 'block';
   
   $('#dashTxBody').innerHTML = sortedTx.map(t => {
-    const cust = state.customers[t.customerPhone] || { name: 'Unknown Account', phone: t.customerPhone };
+    const cust = state.customers[t.customerPhone] || { name: 'Unknown', phone: t.customerPhone };
     return `<tr>
-      <td><div class="customer-cell"><span class="avatar">${initials(cust.name)}</span><div><strong>${escapeHtml(cust.name)}</strong><span>+91 ${escapeHtml(cust.phone)}</span></div></div></td>
+      <td><strong>${escapeHtml(cust.name)}</strong></td>
       <td>${formatDate(t.date)}</td>
-      <td>${escapeHtml(t.description || '—')}</td>
-      <td><span class="status ${t.type === 'DEBT' ? 'pending' : 'sent'}"><i></i>${t.type}</span></td>
+      <td><span class="status ${t.type === 'DEBT' ? 'pending' : 'sent'}">${t.type}</span></td>
       <td class="amount">₹${money(t.amount)}</td>
+      <td style="text-align:right;">
+        <button class="primary-button quick-row-send-btn" data-phone="${cust.phone}" style="padding: 6px 12px; font-size: 11px; background: var(--wa); box-shadow: none; width:auto; text-align:center;">
+          ⚡ Send
+        </button>
+      </td>
     </tr>`;
   }).join('');
 
   const activeTodayPhones = Array.from(new Set(state.transactions.filter(t => t.date === TODAY).map(t => t.customerPhone)));
-  $('#readyCount').textContent = `${activeTodayPhones.length} customer account updates logged today`;
+  $('#readyCount').textContent = `${activeTodayPhones.length} active today`;
   
   const recipientSelect = $('#recipientSelect');
-  const lastSelected = recipientSelect.value;
-  
   if (activeTodayPhones.length === 0) {
-    recipientSelect.innerHTML = '<option value="">No context targets available today</option>';
-    $('#recipientAvatar').textContent = '—';
-    $('#messagePreview').textContent = 'Log transactions first to test dispatch pipelines.';
+    recipientSelect.innerHTML = '<option value="">No targets active today</option>';
+    $('#messagePreview').textContent = 'Log items first to test updates.';
   } else {
     recipientSelect.innerHTML = activeTodayPhones.map(p => {
       const c = state.customers[p];
-      return `<option value="${p}">${escapeHtml(c.name)} (Outstanding: ₹${money(getCustomerMetrics(p).outstanding)})</option>`;
+      return `<option value="${p}">${escapeHtml(c.name)} (₹${money(getCustomerMetrics(p).outstanding)})</option>`;
     }).join('');
-    if (activeTodayPhones.includes(lastSelected)) recipientSelect.value = lastSelected;
     updateDashboardMessagePreview();
   }
-  $('#upiStatusText').textContent = state.business.upiId ? `Active Direct Gateway: ${state.business.upiId}` : 'Links Disabled - Set UPI ID in business profile';
+  $('#upiStatusText').textContent = state.business.upiId ? `Active UPI ID: ${state.business.upiId}` : 'No UPI Set Up';
 }
 
 function updateDashboardMessagePreview() {
   const phone = $('#recipientSelect').value;
   if (!phone || !state.customers[phone]) return;
   $('#recipientAvatar').textContent = initials(state.customers[phone].name);
-  
   const selectedTplObj = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
   $('#messagePreview').textContent = compileMessageString(phone, selectedTplObj.body);
 }
@@ -214,35 +203,27 @@ function updateDashboardMessagePreview() {
 function renderCustomersView() {
   const query = $('#custSearchInput').value.toLowerCase().trim();
   const sort = $('#custSortSelect').value;
-  
   let list = Object.values(state.customers).map(c => ({ ...c, metrics: getCustomerMetrics(c.phone) }));
 
-  if (query) {
-    list = list.filter(c => c.name.toLowerCase().includes(query) || c.phone.includes(query));
-  }
+  if (query) list = list.filter(c => c.name.toLowerCase().includes(query) || c.phone.includes(query));
 
   list.sort((a, b) => {
     if (sort === 'name') return a.name.localeCompare(b.name);
     if (sort === 'high') return b.metrics.outstanding - a.metrics.outstanding;
     if (sort === 'low') return a.metrics.outstanding - b.metrics.outstanding;
-    if (sort === 'recent') return (b.metrics.lastTxDate || '').localeCompare(a.metrics.lastTxDate || '');
     return 0;
   });
 
   $('#customerTableEmpty').style.display = list.length ? 'none' : 'block';
-  $('#customerDirectoryCount').textContent = `${Object.keys(state.customers).length} Total Accounts`;
+  $('#customerDirectoryCount').textContent = `${list.length} Accounts`;
 
   $('#customerTableBody').innerHTML = list.map((c, i) => `
     <tr>
       <td>${i + 1}</td>
       <td><strong>${escapeHtml(c.name)}</strong></td>
       <td>+91 ${escapeHtml(c.phone)}</td>
-      <td class="amount" style="color: ${c.metrics.outstanding > 0 ? '#e11d48' : c.metrics.outstanding < 0 ? 'var(--green)' : 'var(--muted)'};">
-        ₹${money(c.metrics.outstanding)}
-      </td>
-      <td style="text-align:right;">
-        <button class="primary-button view-ledger-btn" data-phone="${c.phone}" style="padding: 6px 12px; font-size:11px;">View Ledger Statement →</button>
-      </td>
+      <td class="amount" style="color: ${c.metrics.outstanding > 0 ? '#e11d48' : 'var(--green)'};">₹${money(c.metrics.outstanding)}</td>
+      <td style="text-align:right;"><button class="primary-button view-ledger-btn" data-phone="${c.phone}" style="padding:6px 10px; font-size:11px;">Ledger →</button></td>
     </tr>
   `).join('');
 }
@@ -260,23 +241,19 @@ function renderCustomerLedgerView() {
   $('#ledgerTotalDebt').textContent = `₹${money(metrics.totalDebt)}`;
   $('#ledgerTotalCredit').textContent = `₹${money(metrics.totalCredit)}`;
   $('#ledgerTotalOutstanding').textContent = `₹${money(metrics.outstanding)}`;
-  
-  $('#ledgerOutstandingCard').style.background = metrics.outstanding > 0 ? '#e11d48' : 'var(--teal)';
 
   const historicalTx = state.transactions.filter(t => t.customerPhone === phone).sort((a, b) => a.date.localeCompare(b.date));
   let runningBal = 0;
 
   $('#ledgerItemsBody').innerHTML = historicalTx.map(t => {
-    if (t.type === 'DEBT') runningBal += Number(t.amount);
-    else runningBal -= Number(t.amount);
-
+    runningBal += (t.type === 'DEBT' ? Number(t.amount) : -Number(t.amount));
     return `<tr>
       <td>${formatDate(t.date)}</td>
       <td>${escapeHtml(t.description || 'Reference entry')}</td>
-      <td style="color:#e11d48; font-weight:700;">${t.type === 'DEBT' ? '₹' + money(t.amount) : '—'}</td>
-      <td style="color:var(--green); font-weight:700;">${t.type === 'CREDIT' ? '₹' + money(t.amount) : '—'}</td>
+      <td style="color:#e11d48;">${t.type === 'DEBT' ? '₹' + money(t.amount) : '—'}</td>
+      <td style="color:var(--green);">${t.type === 'CREDIT' ? '₹' + money(t.amount) : '—'}</td>
       <td class="amount">₹${money(runningBal)}</td>
-      <td><button class="row-menu delete-tx-btn" data-id="${t.id}" style="color:#e11d48; font-size:16px;">×</button></td>
+      <td><button class="row-menu delete-tx-btn" data-id="${t.id}" style="color:#e11d48;">×</button></td>
     </tr>`;
   }).join('');
 }
@@ -285,7 +262,6 @@ function renderTransactionsGlobalView() {
   const query = $('#txSearchInput').value.toLowerCase().trim();
   const dateF = $('#txDateFilterInput').value;
   const typeF = $('#txTypeFilterSelect').value;
-
   let list = [...state.transactions];
 
   if (query) list = list.filter(t => (t.description || '').toLowerCase().includes(query));
@@ -295,10 +271,10 @@ function renderTransactionsGlobalView() {
   list.sort((a, b) => b.date.localeCompare(a.date));
 
   $('#txGlobalBody').innerHTML = list.map(t => {
-    const cust = state.customers[t.customerPhone] || { name: 'Legacy Deleted Profile', phone: t.customerPhone };
+    const cust = state.customers[t.customerPhone] || { name: 'Deleted Profile', phone: t.customerPhone };
     return `<tr>
       <td>${formatDate(t.date)}</td>
-      <td><strong>${escapeHtml(cust.name)}</strong><br/><small style="color:var(--muted)">+91 ${cust.phone}</small></td>
+      <td><strong>${escapeHtml(cust.name)}</strong></td>
       <td>${escapeHtml(t.description || '—')}</td>
       <td><span class="status ${t.type === 'DEBT' ? 'pending' : 'sent'}">${t.type}</span></td>
       <td class="amount">₹${money(t.amount)}</td>
@@ -313,13 +289,12 @@ function renderTemplatesWorkspaceView() {
     const isActive = state.templates.activeId === t.id;
     return `<div class="sidebar-card" style="background:#fff; border: 1px solid ${isActive ? 'var(--teal)' : 'var(--line)'}; margin:0; display:grid; gap:8px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <strong style="font-size:14px; color:var(--ink);">${escapeHtml(t.title)}</strong>
-        <span class="status ${isActive ? 'sent' : 'pending'}">${isActive ? 'Active Default' : 'Standby'}</span>
+        <strong>${escapeHtml(t.title)}</strong>
+        <span class="status ${isActive ? 'sent' : 'pending'}">${isActive ? 'Active' : 'Standby'}</span>
       </div>
       <pre style="white-space:pre-wrap; background:var(--canvas); padding:10px; border-radius:8px; font-size:11px; margin:4px 0; font-family:inherit;">${escapeHtml(t.body)}</pre>
-      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:4px;">
-        <button class="primary-button make-template-active-btn" data-id="${t.id}" style="padding:6px 12px; font-size:11px; background:${isActive ? 'var(--muted)' : 'var(--teal)'}" ${isActive ? 'disabled' : ''}>Set Primary</button>
-        <button class="secondary-button delete-template-btn" data-id="${t.id}" style="padding:6px 12px; font-size:11px; margin:0; color:#e11d48;" ${['daily_reminder','payment_reminder','festival_greeting','payment_received'].includes(t.id) ? 'disabled style="opacity:0.3;"' : ''}>Delete</button>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button class="primary-button make-template-active-btn" data-id="${t.id}" style="padding:6px 12px; font-size:11px; background:${isActive ? 'var(--muted)' : 'var(--teal)'}" ${isActive ? 'disabled' : ''}>Use This</button>
       </div>
     </div>`;
   }).join('');
@@ -338,7 +313,6 @@ function renderBusinessProfileView() {
   f.elements.businessPhone.value = state.business.businessPhone || '';
 }
 
-// --- INTERACTIVE SYSTEM MODAL UTILITIES ---
 function openModal(el) { el.classList.add('open'); el.setAttribute('aria-hidden', 'false'); }
 function closeModal(el) { el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); }
 
@@ -356,22 +330,18 @@ function openTransactionModal(preSelectedPhone = null, targetClassification = 'D
     $('#txModalSelectedName').textContent = state.customers[preSelectedPhone].name;
     $('#txModalSelectedBalance').textContent = `Outstanding: ₹${money(getCustomerMetrics(preSelectedPhone).outstanding)}`;
     $('#txModalFields').style.display = 'grid';
-    setTimeout(() => form.querySelector('[name="amount"]').focus(), 150);
   } else {
     state.activeTxModalTargetPhone = null;
     $('#txModalSearchCust').style.display = 'block';
-    $('#txModalSearchCust').value = '';
     $('#txModalAccountStatus').style.display = 'none';
     $('#txModalFields').style.display = 'none';
     hydrateRecentCustomerBadges();
-    setTimeout(() => $('#txModalSearchCust').focus(), 150);
   }
   openModal($('#txModal'));
 }
 
 function hydrateRecentCustomerBadges() {
-  const dynamicPhones = Array.from(new Set(state.transactions.map(t => t.customerPhone))).slice(-4);
-  
+  const dynamicPhones = Array.from(new Set(state.transactions.map(t => t.customerPhone))).slice(-3);
   if (dynamicPhones.length === 0) {
     $('#txModalRecentContainer').style.display = 'none';
   } else {
@@ -383,11 +353,43 @@ function hydrateRecentCustomerBadges() {
   }
 }
 
-// --- SYSTEM LOGIC MOUNT ASSEMBLIES ---
+// --- SYSTEM LOGIC MOUNT ENGINE RUNTIMES ---
 document.addEventListener('DOMContentLoaded', () => {
   $$('.nav-item').forEach(i => i.addEventListener('click', () => navigateToView(i.dataset.view)));
+  $$('.mobile-bottom-nav button').forEach(m => m.addEventListener('click', () => navigateToView(m.dataset.view)));
+  
   $('#navBrand').addEventListener('click', (e) => { e.preventDefault(); navigateToView('dashboard'); });
   $('#sidebarProfileBtn').addEventListener('click', () => navigateToView('business'));
+
+  // Table Row Dispatch Listener Actions
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('quick-row-send-btn')) {
+      const phone = e.target.dataset.phone;
+      if (!phone || !state.customers[phone]) return showToast('Error', 'Invalid selection context.');
+      const defaultTpl = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
+      const rawMsg = compileMessageString(phone, defaultTpl.body);
+      window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(rawMsg)}`, '_blank', 'noopener,noreferrer');
+    }
+  });
+
+  // Native Contact Integration Block
+  $('#mobileDeviceContactImportBtn').addEventListener('click', async () => {
+    if (!navigator.contacts || !navigator.contacts.select) {
+      showToast('Notice', 'Smartphone platform prevents active context reading. Fill inputs below manually.');
+      return;
+    }
+    try {
+      const pickedContacts = await navigator.contacts.select(['name', 'tel'], { multiple: false });
+      if (pickedContacts && pickedContacts.length > 0) {
+        const targetPerson = pickedContacts[0];
+        $('#customerQuickForm [name="name"]').value = targetPerson.name?.[0] || '';
+        $('#customerQuickForm [name="phone"]').value = String(targetPerson.tel?.[0] || '').replace(/\D/g, '').slice(-10);
+        showToast('Complete', 'Coordinates loaded.');
+      }
+    } catch (err) {
+      showToast('Interrupted', 'Manual insertion ready.');
+    }
+  });
 
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('view-ledger-btn')) {
@@ -408,24 +410,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#globalAddTxBtn').addEventListener('click', () => openTransactionModal());
   $('#dashViewAllTxBtn').addEventListener('click', () => navigateToView('transactions'));
-  $('#createCustomerQuickBtn').addEventListener('click', () => openModal($('#customerQuickModal')));
+  $('#createCustomerQuickBtn').addEventListener('click', () => {
+    $('#customerQuickForm').reset();
+    openModal($('#customerQuickModal'));
+  });
   
   $('#ledgerBackBtn').addEventListener('click', () => navigateToView('customers'));
   $('#ledgerAddDebtBtn').addEventListener('click', () => openTransactionModal(state.selectedLedgerCustomerPhone, 'DEBT'));
   $('#ledgerAddPaymentBtn').addEventListener('click', () => openTransactionModal(state.selectedLedgerCustomerPhone, 'CREDIT'));
   $('#ledgerPrintBtn').addEventListener('click', () => { window.print(); });
 
+  // Dynamic Lookup with Auto-create Fallback Hooks
   $('#txModalSearchCust').addEventListener('input', (e) => {
     const txt = e.target.value.toLowerCase().trim();
-    if (!txt) return;
+    if (!txt) {
+      hydrateRecentCustomerBadges();
+      return;
+    }
+    
     const match = Object.values(state.customers).find(c => c.name.toLowerCase().includes(txt) || c.phone.includes(txt));
     if (match) {
       openTransactionModal(match.phone, $('#txModalTypeSelect').value);
+    } else {
+      $('#txModalRecentContainer').style.display = 'block';
+      $('#txModalRecentBadges').innerHTML = `
+        <button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="${escapeHtml(e.target.value)}" style="padding:10px 14px; background:var(--teal); width:100%; text-align:center;">
+          ＋ Setup Account for "${escapeHtml(e.target.value)}"
+        </button>
+      `;
     }
   });
 
   document.addEventListener('click', (e) => {
     if (e.target.id === 'txModalCreateNewCustBtn') {
+      const typedName = e.target.dataset.name;
+      $('#customerQuickForm').reset();
+      $('#quickCustNameField').value = typedName || '';
       openModal($('#customerQuickModal'));
     }
   });
@@ -434,12 +454,12 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const p = String(fd.get('phone')).replace(/\D/g, '').slice(-10);
-    if (p.length !== 10) return showToast('Validation Error', 'Enter 10-digit smartphone index.');
+    if (p.length !== 10) return showToast('Validation Error', 'Provide 10 digits.');
     
     state.customers[p] = { id: crypto.randomUUID(), name: fd.get('name').trim(), phone: p, createdAt: new Date().toISOString() };
     saveToStorage();
     closeModal($('#customerQuickModal'));
-    showToast('Success', 'Profile index added.');
+    showToast('Success', 'Profile generated.');
     
     if (state.currentView === 'customers') renderCustomersView();
     if ($('#txModal').classList.contains('open')) openTransactionModal(p, $('#txModalTypeSelect').value);
@@ -447,11 +467,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#txModalForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    if (!state.activeTxModalTargetPhone) return showToast('Error Context', 'Link a customer profile card.');
+    if (!state.activeTxModalTargetPhone) return showToast('Error', 'Link a customer profile card.');
     
     const fd = new FormData(e.currentTarget);
     state.transactions.push({
-      id: 'tx-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      id: 'tx-' + Date.now(),
       customerPhone: state.activeTxModalTargetPhone,
       type: fd.get('type'),
       amount: Number(fd.get('amount')),
@@ -461,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     saveToStorage();
     closeModal($('#txModal'));
-    showToast('Balance Authenticated', 'Ledger balances recalculated smoothly.');
+    showToast('Success', 'Ledger updated.');
     renderCurrentView();
   });
 
@@ -476,17 +496,17 @@ document.addEventListener('DOMContentLoaded', () => {
       businessPhone: fd.get('businessPhone').trim()
     };
     saveToStorage();
-    showToast('Saved Settings', 'System configurations sync committed.');
+    showToast('Saved', 'Profile settings updated.');
     renderCurrentView();
   });
 
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('delete-tx-btn')) {
       const id = e.target.dataset.id;
-      if (!id || !confirm('Permanently purge this ledger entry?')) return;
+      if (!id || !confirm('Delete this entry?')) return;
       state.transactions = state.transactions.filter(t => t.id !== id);
       saveToStorage();
-      showToast('Record Cleared', 'Historical offsets updated.');
+      showToast('Cleared', 'Historical record removed.');
       renderCurrentView();
     }
   });
@@ -495,28 +515,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const f = $('#templateModalForm');
     f.reset();
     f.elements.id.value = '';
-    $('#templateModalTitle').textContent = 'Create Custom Message Template';
     openModal($('#templateModal'));
   });
 
   $('#templateModalForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const existingId = fd.get('id');
-    
-    if (existingId) {
-      const target = state.templates.custom.find(t => t.id === existingId);
-      if (target) { target.title = fd.get('title'); target.body = fd.get('body'); }
-    } else {
-      state.templates.custom.push({
-        id: 'tpl-' + Date.now(),
-        title: fd.get('title').trim(),
-        body: fd.get('body').trim()
-      });
-    }
+    state.templates.custom.push({ id: 'tpl-' + Date.now(), title: fd.get('title').trim(), body: fd.get('body').trim() });
     saveToStorage();
     closeModal($('#templateModal'));
-    showToast('Template Stored', 'Layout rules mapped successfully.');
     renderTemplatesWorkspaceView();
   });
 
@@ -524,56 +531,51 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.classList.contains('make-template-active-btn')) {
       state.templates.activeId = e.target.dataset.id;
       saveToStorage();
-      showToast('Context Target Fixed', 'Primary default message template switched.');
-      renderTemplatesWorkspaceView();
-    }
-    if (e.target.classList.contains('delete-template-btn')) {
-      const id = e.target.dataset.id;
-      state.templates.custom = state.templates.custom.filter(t => t.id !== id);
-      if (state.templates.activeId === id) state.templates.activeId = 'daily_reminder';
-      saveToStorage();
+      showToast('Switched', 'Primary messaging design updated.');
       renderTemplatesWorkspaceView();
     }
   });
 
-  $('#previewTemplateDropdownBtn').addEventListener('click', () => {
-    $('#previewTemplateMenu').classList.toggle('show');
-  });
-  
+  $('#previewTemplateDropdownBtn').addEventListener('click', () => $('#previewTemplateMenu').classList.toggle('show'));
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('select-preview-tpl-action')) {
       state.templates.activeId = e.target.dataset.id;
       saveToStorage();
-      $('#previewTemplateMenu').classList.remove('show');
       updateDashboardMessagePreview();
-    } else if (e.target.id !== 'previewTemplateDropdownBtn') {
-      $('#previewTemplateMenu').classList.remove('show');
     }
+    if (e.target.id !== 'previewTemplateDropdownBtn') $('#previewTemplateMenu').classList.remove('show');
   });
 
+  // --- MOBILE OPTIMIZED BATCH ADVANCING QUEUE ACTION ---
   function fireWhatsAppTransactionNotification() {
     const phone = $('#recipientSelect').value;
-    if (!phone) return showToast('Selection Fault', 'Pick an operational smartphone entry.');
+    if (!phone) return showToast('Selection Fault', 'No active customer target to ping.');
+    
     const msg = $('#messagePreview').textContent;
     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    
+    const recipientSelect = $('#recipientSelect');
+    const currentIndex = recipientSelect.selectedIndex;
+    
+    if (currentIndex !== -1 && currentIndex < recipientSelect.options.length - 1) {
+      recipientSelect.selectedIndex = currentIndex + 1;
+      updateDashboardMessagePreview();
+      showToast('Queue Advanced', 'Next contact summary parsed automatically!');
+    } else {
+      showToast('Queue Finished', 'All pending statements reviewed.');
+    }
   }
 
-  const waSendBtn = $('#sendWhatsAppBtn');
-  waSendBtn.addEventListener('click', fireWhatsAppTransactionNotification);
-  waSendBtn.addEventListener('dblclick', () => { navigateToView('templates'); });
+  $('#sendWhatsAppBtn').addEventListener('click', fireWhatsAppTransactionNotification);
   
   $('#ledgerWaBtn').addEventListener('click', () => {
     const phone = state.selectedLedgerCustomerPhone;
     const defaultTpl = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
-    const rawMsg = compileMessageString(phone, defaultTpl.body);
-    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(rawMsg)}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(compileMessageString(phone, defaultTpl.body))}`, '_blank');
   });
 
   $('#txModalClearCustBtn').addEventListener('click', () => openTransactionModal(null));
-  
-  $$('.close-modal, .cancel-button').forEach(b => b.addEventListener('click', (e) => {
-    closeModal(e.target.closest('.modal-backdrop'));
-  }));
+  $$('.close-modal, .cancel-button').forEach(b => b.addEventListener('click', (e) => closeModal(e.target.closest('.modal-backdrop'))));
 
   const dtText = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
   $('#todayLabel').textContent = dtText.toUpperCase();
