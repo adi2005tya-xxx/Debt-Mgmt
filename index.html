@@ -12,7 +12,6 @@
 </head>
 <body>
   <div class="app-shell">
-    <!-- SIDEBAR NAVIGATION -->
     <aside class="sidebar">
       <a class="brand" href="#" id="navBrand">
         <span class="brand-mark">C</span>
@@ -37,7 +36,6 @@
       </div>
     </aside>
 
-    <!-- MOBILE NAVIGATION (FIXED IDs DATA MATRIX) -->
     <nav class="mobile-bottom-nav">
       <button class="mobile-nav-item active" data-view="dashboard"><div>⌂</div><span>Overview</span></button>
       <button class="mobile-nav-item" data-view="customers"><div>♙</div><span>Customers</span></button>
@@ -46,7 +44,6 @@
       <button class="mobile-nav-item" data-view="business"><div>⚙</div><span>Profile</span></button>
     </nav>
 
-    <!-- MAIN INTERFACE BODY -->
     <main>
       <header class="topbar">
         <div>
@@ -59,7 +56,6 @@
         </div>
       </header>
 
-      <!-- VIEW: DASHBOARD OVERVIEW -->
       <div id="view-dashboard" class="app-view active">
         <section class="stats" aria-label="Today's summary">
           <article class="stat-card featured">
@@ -131,7 +127,6 @@
         </section>
       </div>
 
-      <!-- VIEW: CUSTOMER MASTER DIRECTORY -->
       <div id="view-customers" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
@@ -159,7 +154,6 @@
         </article>
       </div>
 
-      <!-- VIEW: ITEMIZED INDIVIDUAL LEDGER -->
       <div id="view-ledger" class="app-view">
         <div style="margin-bottom:15px;"><button class="text-button" id="ledgerBackBtn">← Back to Directory</button></div>
         <div class="ledger-profile-header">
@@ -204,7 +198,6 @@
         </article>
       </div>
 
-      <!-- VIEW: HISTORICAL LOGS -->
       <div id="view-transactions" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
@@ -228,7 +221,6 @@
         </article>
       </div>
 
-      <!-- VIEW: MESSAGE TEMPLATES -->
       <div id="view-templates" class="app-view">
         <article class="panel" style="margin-bottom: 16px; background: #fafbfb; border-color: var(--line);">
           <div style="padding: 16px 20px;">
@@ -255,7 +247,6 @@
         </article>
       </div>
 
-      <!-- VIEW: BUSINESS PROFILE -->
       <div id="view-business" class="app-view">
         <article class="panel" style="max-width:700px; margin:0 auto;">
           <div class="panel-header">
@@ -280,7 +271,6 @@
     </main>
   </div>
 
-  <!-- MODAL: LEDGER ENTRY/TRANSACTION -->
   <div class="modal-backdrop" id="txModal" aria-hidden="true">
     <section class="modal" role="dialog" aria-modal="true">
       <div class="modal-head"><div><p class="eyebrow" id="txModalEyebrow">LEDGER LOG</p><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
@@ -322,7 +312,6 @@
     </section>
   </div>
 
-  <!-- MODAL: INITIALIZE NEW CUSTOMER -->
   <div class="modal-backdrop" id="customerQuickModal" aria-hidden="true">
     <section class="modal" role="dialog" style="max-width:400px;">
       <div class="modal-head"><div><p class="eyebrow">DIRECTORY</p><h2>Initialize New Account</h2></div><button class="close-modal" id="custQuickCloseBtn">×</button></div>
@@ -341,7 +330,6 @@
     </section>
   </div>
 
-  <!-- MODAL: TEMPLATE WORKSPACE CUSTOMIZATION -->
   <div class="modal-backdrop" id="templateModal" aria-hidden="true">
     <section class="modal" role="dialog">
       <div class="modal-head"><div><p class="eyebrow">DASHBOARD</p><h2 id="templateModalTitle">Modify Template</h2></div><button class="close-modal" id="templateModalCloseBtn">×</button></div>
@@ -358,7 +346,6 @@
     </section>
   </div>
 
-  <!-- TOAST FEEDBACK MODULE -->
   <div class="toast" id="toast"><span>✓</span><div><strong id="toastTitle">Success</strong><p id="toastMessage">Done.</p></div></div>
   <script src="app.js"></script>
 </body>
