@@ -367,6 +367,8 @@ function openModal(modalId) {
   if (modal) {
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
+    // Freeze parent page scroll layers
+    document.body.classList.add('modal-open-freeze');
   }
 }
 
@@ -375,6 +377,10 @@ function closeModal(modalId) {
   if (modal) {
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
+    // Check if any other modal backdrop remains open before removing body lock
+    if ($$('.modal-backdrop.open').length === 0) {
+      document.body.classList.remove('modal-open-freeze');
+    }
   }
 }
 
@@ -385,6 +391,8 @@ function resetTxModal() {
   $('#txModalSearchCust').value = '';
   $('#txModalAccountStatus').style.display = 'none';
   $('#txModalRecentContainer').style.display = 'none';
+  $('#txModalSearchResults').style.display = 'none';
+  $('#txModalSearchResults').innerHTML = '';
 }
 
 function populateTxModalAccountSelection(phone) {
@@ -392,6 +400,7 @@ function populateTxModalAccountSelection(phone) {
   if (!cust) return;
   state.activeTxModalTargetPhone = phone;
   $('#txModalSearchCust').style.display = 'none';
+  $('#txModalSearchResults').style.display = 'none';
   $('#txModalAccountStatus').style.display = 'flex';
   $('#txModalSelectedName').textContent = cust.name;
   $('#txModalSelectedBalance').textContent = `Outstanding: ₹${money(getCustomerMetrics(phone).outstanding)}`;
@@ -426,6 +435,20 @@ function bindApplicationEvents() {
     if (btn && btn.dataset.phone) {
       state.selectedLedgerCustomerPhone = btn.dataset.phone;
       navigateToView('ledger');
+    }
+  });
+
+  // --- INDIVIDUAL CUSTOMER LEDGER WHATSAPP TEXT LAUNCHER ---
+  document.body.addEventListener('click', (e) => {
+    const waLedgerBtn = e.target.closest('#ledgerWaBtn');
+    if (waLedgerBtn) {
+      const phone = state.selectedLedgerCustomerPhone;
+      if (!phone || !state.customers[phone]) return;
+      
+      const selectedTpl = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
+      const message = compileMessageString(phone, selectedTpl.body);
+      
+      window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`, '_blank');
     }
   });
 
@@ -544,17 +567,49 @@ function bindApplicationEvents() {
   $('#txModalCancelBtn').addEventListener('click', () => closeModal('txModal'));
   $('#txModalClearCustBtn').addEventListener('click', () => resetTxModal());
 
+  // --- PREDICTIVE AUTOCOMPLETE SEARCH MATRIX CONTROLLER ---
   $('#txModalSearchCust').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase().trim();
-    const target = Object.values(state.customers).find(c => c.name.toLowerCase() === q || c.phone === q);
-    if (target) {
-      populateTxModalAccountSelection(target.phone);
+    const resultsPanel = $('#txModalSearchResults');
+    
+    if (!q) {
+      resultsPanel.style.display = 'none';
+      resultsPanel.innerHTML = '';
+      return;
     }
+
+    const filtered = Object.values(state.customers).filter(c => 
+      c.name.toLowerCase().includes(q) || c.phone.includes(q)
+    );
+
+    if (filtered.length === 0) {
+      resultsPanel.style.display = 'block';
+      resultsPanel.innerHTML = `<div style="padding:10px; color:var(--muted); font-size:12px;">No matching accounts found</div>`;
+      return;
+    }
+
+    resultsPanel.style.display = 'block';
+    resultsPanel.innerHTML = filtered.map(c => `
+      <button type="button" class="dropdown-item search-autocomplete-row-btn" data-phone="${c.phone}">
+        <b>${escapeHtml(c.name)}</b> <span style="font-size:11px; color:var(--muted);">+91 ${escapeHtml(c.phone)}</span>
+      </button>
+    `).join('');
   });
 
   document.body.addEventListener('click', (e) => {
+    const rowBtn = e.target.closest('.search-autocomplete-row-btn');
+    if (rowBtn && rowBtn.dataset.phone) {
+      populateTxModalAccountSelection(rowBtn.dataset.phone);
+    }
+    
     const badge = e.target.closest('.tx-badge-select-btn');
     if (badge) populateTxModalAccountSelection(badge.dataset.phone);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#txModalSearchCust') && !e.target.closest('#txModalSearchResults')) {
+      if ($('#txModalSearchResults')) $('#txModalSearchResults').style.display = 'none';
+    }
   });
 
   $('#txModalForm').addEventListener('submit', (e) => {
