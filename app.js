@@ -20,7 +20,7 @@ const state = {
   activeTxModalTargetPhone: null
 };
 
-// --- CORE UTILITY HELPERS ---
+// --- CORE UTILITY HELPER IMPLEMENTATIONS ---
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (val) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
@@ -105,6 +105,7 @@ function buildPaymentLink(phone, amount) {
   return `upi://pay?${params.toString()}`;
 }
 
+// --- VISUAL STRATEGY BINDING RE-WRITERS ---
 function compileMessageString(phone, templateBody) {
   const cust = state.customers[phone];
   if (!cust) return '';
@@ -148,7 +149,6 @@ function renderCurrentView() {
   }
 }
 
-// --- COLORED SYSTEM RENDER CHANNELS ---
 function renderDashboardView() {
   const aggs = getSystemAggregateBalances();
   $('#dashTodayNet').textContent = `₹${money(aggs.todayNetChange)}`;
@@ -165,7 +165,7 @@ function renderDashboardView() {
     const isDebt = t.type === 'DEBT';
     
     return `<tr>
-      <td>
+      <td style="padding-left: 16px;">
         <button class="primary-button quick-row-send-btn ${isSent ? 'dispatched-state' : ''}" data-txid="${t.id}" data-phone="${cust.phone}" style="padding: 6px 10px; font-size: 11px; margin:0; width:100%; text-align:center; background: ${isSent ? '#f0f2f1' : 'var(--wa)'}; box-shadow: none; color: ${isSent ? '#8a9491' : '#fff'};">
           ${isSent ? '✓ Sent' : '⚡ Send'}
         </button>
@@ -177,7 +177,7 @@ function renderDashboardView() {
           <i></i>${isDebt ? '🔴 DEBT' : '🟢 PAYMENT'}
         </span>
       </td>
-      <td class="amount" style="color: ${isDebt ? '#e11d48' : 'var(--green)'};">₹${money(t.amount)}</td>
+      <td class="amount" style="text-align: right; padding-right: 16px; color: ${isDebt ? '#e11d48' : 'var(--green)'};">₹${money(t.amount)}</td>
     </tr>`;
   }).join('');
 
@@ -349,47 +349,37 @@ function openTransactionModal(preSelectedPhone = null, targetClassification = 'D
   openModal($('#txModal'));
 }
 
+function borderAlignFormCleaners() {
+  // Clear lingering selection listeners across dynamic views
+}
+
 function hydrateRecentCustomerBadges() {
   const dynamicPhones = Array.from(new Set(state.transactions.map(t => t.customerPhone))).slice(-3);
   $('#txModalRecentContainer').style.display = 'block';
   
   let badgesHtml = dynamicPhones.map(p => {
     const name = state.customers[p] ? state.customers[p].name.split(' ')[0] : 'User';
-    return `<button type="button" class="secondary-button tx-quick-badge" data-phone="${p}" style="margin:0; padding:4px 10px; font-size:11px;">${escapeHtml(name)}</button>`;
+    return `<button type="button" class="secondary-button tx-quick-badge" data-phone="${p}" style="margin:0; padding:6px 12px; font-size:11px; background:#f0f2f1; border-radius:8px; color:var(--ink); border:1px solid var(--line);"> ${escapeHtml(name)} </button>`;
   }).join('');
   
-  $('#txModalRecentBadges').innerHTML = badgesHtml + `<button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="" style="padding:4px 10px; font-size:11px; background:var(--ink);">＋ New Account</button>`;
+  $('#txModalRecentBadges').innerHTML = badgesHtml + `<button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="" style="padding:6px 12px; font-size:11px; background:var(--ink); border-radius:8px;">＋ New Account</button>`;
 }
 
-// --- COMPONENT EVENT LIFECYCLE MOUNT ---
+// --- ATTACH LISTENERS IN LIFECYCLE INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-  // HARD RE-BINDING ON TOUCH NAVIGATION NODES FOR SMARTPHONES
-  const mobileNavContainer = document.getElementById('mobileNavigationContainer');
-  if (mobileNavContainer) {
-    mobileNavContainer.addEventListener('click', (e) => {
-      const targetButton = e.target.closest('.mobile-nav-item');
-      if (targetButton) {
-        e.preventDefault();
-        e.stopPropagation();
-        const viewName = targetButton.getAttribute('data-view');
-        if (viewName) navigateToView(viewName);
-      }
-    });
-  }
-
-  // Desktop side system bar assignments fallback links
-  const desktopNavItems = document.querySelectorAll('.sidebar .nav-item');
-  desktopNavItems.forEach(btn => {
+  // EXPLICIT SIDEBAR & BOTTOM MOBILE FOOTER ROUTING BINDING MECHANISM
+  $$('.nav-item, .mobile-nav-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      navigateToView(btn.getAttribute('data-view'));
+      const targetView = btn.getAttribute('data-view');
+      if (targetView) navigateToView(targetView);
     });
   });
 
   $('#navBrand').addEventListener('click', (e) => { e.preventDefault(); navigateToView('dashboard'); });
   $('#sidebarProfileBtn').addEventListener('click', () => navigateToView('business'));
 
-  // Quick Action row dispatcher loops
+  // Table Delegation Clicks
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('quick-row-send-btn')) {
       const txId = e.target.dataset.txid;
@@ -412,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#mobileDeviceContactImportBtn').addEventListener('click', async () => {
     if (!navigator.contacts || !navigator.contacts.select) {
-      showToast('Notice', 'Smartphone platform prevents active address reading APIs. Configure fields manually.');
+      showToast('Notice', 'Smartphone permissions block reading APIs. Fill fields manually below.');
       return;
     }
     try {
@@ -424,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Complete', 'Coordinates mapped.');
       }
     } catch (err) {
-      showToast('Interrupted', 'Manual input ready.');
+      showToast('Interrupted', 'Manual mode.');
     }
   });
 
@@ -458,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#ledgerAddPaymentBtn').addEventListener('click', () => openTransactionModal(state.selectedLedgerCustomerPhone, 'CREDIT'));
   $('#ledgerPrintBtn').addEventListener('click', () => { window.print(); });
 
-  // ACCOUNT SELECTION STRICT FILTER AND MANUALLY LINK ACTIONS
+  // STRICT LOOKUP MATCH CONTROLLER (REQUIRES LINK CLICK)
   $('#txModalSearchCust').addEventListener('input', (e) => {
     const txt = e.target.value.trim();
     if (!txt) {
@@ -479,17 +469,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (searchMatches.length > 0) {
       $('#txModalRecentBadges').innerHTML = searchMatches.slice(0, 3).map(c => `
-        <button type="button" class="secondary-button tx-quick-badge" data-phone="${c.phone}" style="margin:0; padding:6px 10px; font-size:11px; background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">
+        <button type="button" class="secondary-button tx-quick-badge" data-phone="${c.phone}" style="margin:0; padding:6px 12px; font-size:11px; background:#eaf5f2; color:var(--teal); border:1px solid var(--line); border-radius:8px;">
           Link: ${escapeHtml(c.name)}
         </button>
       `).join('') + `
-        <button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="${escapeHtml(txt)}" style="padding:6px 10px; font-size:11px; background:var(--ink);">
+        <button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="${escapeHtml(txt)}" style="padding:6px 12px; font-size:11px; background:var(--ink); border-radius:8px;">
           ＋ Create "${escapeHtml(txt)}"
         </button>
       `;
     } else {
       $('#txModalRecentBadges').innerHTML = `
-        <button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="${escapeHtml(txt)}" style="padding:10px 12px; background:var(--teal); width:100%; text-align:center;">
+        <button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="${escapeHtml(txt)}" style="padding:12px; background:var(--teal); width:100%; text-align:center; border-radius:10px; color:#fff;">
           ＋ Create New Account for "${escapeHtml(txt)}"
         </button>
       `;
