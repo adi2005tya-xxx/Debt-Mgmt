@@ -12,7 +12,6 @@
 </head>
 <body>
   <div class="app-shell">
-    <!-- DESKTOP SIDEBAR -->
     <aside class="sidebar">
       <a class="brand" href="#" id="navBrand">
         <span class="brand-mark">C</span>
@@ -37,8 +36,7 @@
       </div>
     </aside>
 
-    <!-- MOBILE BOTTOM NAVIGATION FIXED BAR -->
-    <nav class="mobile-bottom-nav">
+    <nav class="mobile-bottom-nav" id="mobileNavigationContainer">
       <button class="mobile-nav-item active" data-view="dashboard"><div>⌂</div><span>Overview</span></button>
       <button class="mobile-nav-item" data-view="customers"><div>♙</div><span>Customers</span></button>
       <button class="mobile-nav-item" data-view="transactions"><div>▤</div><span>Logs</span></button>
@@ -47,7 +45,6 @@
     </nav>
 
     <main>
-      <!-- TOPBAR -->
       <header class="topbar">
         <div>
           <p class="eyebrow" id="todayLabel">TODAY</p>
@@ -59,7 +56,6 @@
         </div>
       </header>
 
-      <!-- VIEW: DASHBOARD -->
       <div id="view-dashboard" class="app-view active">
         <section class="stats" aria-label="Today's summary">
           <article class="stat-card featured">
@@ -131,7 +127,6 @@
         </section>
       </div>
 
-      <!-- VIEW: CUSTOMERS -->
       <div id="view-customers" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
@@ -159,7 +154,6 @@
         </article>
       </div>
 
-      <!-- VIEW: CUSTOMER LEDGER DETAIL -->
       <div id="view-ledger" class="app-view">
         <div style="margin-bottom:15px;"><button class="text-button" id="ledgerBackBtn">← Back to Directory</button></div>
         <div class="ledger-profile-header">
@@ -204,7 +198,6 @@
         </article>
       </div>
 
-      <!-- VIEW: TRANSACTIONS -->
       <div id="view-transactions" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
@@ -213,7 +206,7 @@
               <input type="text" id="txSearchInput" placeholder="Filter logs..." class="view-search-input" />
               <input type="date" id="txDateFilterInput" class="view-sort-select" style="max-width:140px;" />
               <select id="txTypeFilterSelect" class="view-sort-select">
-                <option value="ALL">All</option>
+                <option value="ALL">All Types</option>
                 <option value="DEBT">🔴 Debts Only</option>
                 <option value="CREDIT">🟢 Payments Only</option>
               </select>
@@ -228,38 +221,36 @@
         </article>
       </div>
 
-      <!-- VIEW: TEMPLATES -->
       <div id="view-templates" class="app-view">
         <article class="panel" style="margin-bottom: 16px; background: #fafbfb; border-color: var(--line);">
           <div style="padding: 16px 20px;">
-            <h3 style="margin: 0 0 8px 0; font-family: 'Manrope'; font-size: 13px; color: var(--teal); letter-spacing: 0.5px; text-transform: uppercase;">📋 Template Variable Reference Guide</h3>
-            <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--muted); line-height: 1.4;">Copy and paste these exact shortcut tags into your text blocks below to pull current customer totals dynamically:</p>
+            <h3 style="margin: 0 0 8px 0; font-family: 'Manrope'; font-size: 13px; color: var(--teal); letter-spacing: 0.5px; text-transform: uppercase;">📋 Template Keys Reference Guide</h3>
+            <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--muted); line-height: 1.4;">Use these exact keys in your text box layers below to create your templates dynamically:</p>
             <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px;">
               <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Customer Name:</b> <code>{name}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Today's Entry Value:</b> <code>{today_amount}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Net Total Outstanding:</b> <code>{total_debt}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Your Shop Name:</b> <code>{shop_name}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Active UPI Address:</b> <code>{upi_id}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Dynamic UPI Link:</b> <code>{payment_link}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Current Date String:</b> <code>{date}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Today's Entry Amount:</b> <code>{today_amount}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Total Outstanding Balance:</b> <code>{total_debt}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Business Name:</b> <code>{shop_name}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>UPI Address ID:</b> <code>{upi_id}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Automated UPI Pay Link:</b> <code>{payment_link}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Current Entry Date:</b> <code>{date}</code></span>
             </div>
           </div>
         </article>
 
         <article class="panel">
           <div class="panel-header">
-            <div><h2>Message Templates</h2></div>
+            <div><h2>Message Templates Workspace</h2></div>
             <button class="primary-button" id="templateCreateBtn">＋ Custom Template</button>
           </div>
           <div style="padding:20px; display:grid; gap:16px;" id="templatesWorkspaceGrid"></div>
         </article>
       </div>
 
-      <!-- VIEW: BUSINESS PROFILE -->
       <div id="view-business" class="app-view">
         <article class="panel" style="max-width:700px; margin:0 auto;">
           <div class="panel-header">
-            <div><h2>Business Management</h2></div>
+            <div><h2>Business Profile Settings</h2></div>
           </div>
           <form id="businessPageForm" style="padding:20px; display:grid; gap:16px;">
             <div class="form-row">
@@ -280,12 +271,11 @@
     </main>
   </div>
 
-  <!-- MODAL: TRANSACTION -->
   <div class="modal-backdrop" id="txModal" aria-hidden="true">
     <section class="modal" role="dialog" aria-modal="true">
       <div class="modal-head"><div><p class="eyebrow" id="txModalEyebrow">LEDGER LOG</p><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
       <form id="txModalForm">
-        <label>Step 1: Locate Account<input type="text" id="txModalSearchCust" placeholder="🔍 Type customer name or phone..." autocomplete="off" /></label>
+        <label>Step 1: Locate Account<input type="text" id="txModalSearchCust" placeholder="🔍 Type complete customer name or phone..." autocomplete="off" /></label>
         
         <div id="txModalRecentContainer" style="margin-top:-4px; display:none;">
           <span style="font-size:10px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px;">OPTIONS:</span>
@@ -321,7 +311,6 @@
     </section>
   </div>
 
-  <!-- MODAL: ADD CUSTOMER QUICK FORM -->
   <div class="modal-backdrop" id="customerQuickModal" aria-hidden="true">
     <section class="modal" role="dialog" style="max-width:400px;">
       <div class="modal-head"><div><p class="eyebrow">DIRECTORY</p><h2>Initialize New Account</h2></div><button class="close-modal" id="custQuickCloseBtn">×</button></div>
@@ -340,7 +329,6 @@
     </section>
   </div>
 
-  <!-- MODAL: CUSTOM TEMPLATE -->
   <div class="modal-backdrop" id="templateModal" aria-hidden="true">
     <section class="modal" role="dialog">
       <div class="modal-head"><div><p class="eyebrow">DASHBOARD</p><h2 id="templateModalTitle">Modify Template</h2></div><button class="close-modal" id="templateModalCloseBtn">×</button></div>
