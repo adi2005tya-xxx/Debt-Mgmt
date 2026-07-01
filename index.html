@@ -8,24 +8,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- CRISP VECTOR REMIX ICONS -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="app-shell">
+    <!-- SIDEBAR NAVIGATION -->
     <aside class="sidebar">
       <a class="brand" href="#" id="navBrand">
         <span class="brand-mark">C</span>
         <span><strong>Cred</strong>Track</span>
       </a>
       <nav class="nav" aria-label="Main navigation">
-        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Overview</button>
-        <button class="nav-item" data-view="customers"><span>♙</span> Customers</button>
-        <button class="nav-item" data-view="transactions"><span>▤</span> Transactions</button>
-        <button class="nav-item" data-view="templates"><span>✦</span> Templates</button>
-        <button class="nav-item" data-view="business"><span>⚙</span> Profile</button>
+        <button class="nav-item active" data-view="dashboard"><i class="ri-home-5-line"></i> Overview</button>
+        <button class="nav-item" data-view="customers"><i class="ri-user-follow-line"></i> Customers</button>
+        <button class="nav-item" data-view="transactions"><i class="ri-file-list-3-line"></i> Transactions</button>
+        <button class="nav-item" data-view="templates"><i class="ri-chat-quote-line"></i> Templates</button>
+        <button class="nav-item" data-view="business"><i class="ri-settings-3-line"></i> Profile</button>
       </nav>
       <div class="sidebar-card">
-        <span class="card-icon">↗</span>
+        <div class="card-icon"><i class="ri-notification-3-line"></i></div>
         <strong>Evening reminder</strong>
         <p>Review and send today’s updates before closing.</p>
         <span class="reminder-time">Every day · 8:00 PM</span>
@@ -36,14 +39,16 @@
       </div>
     </aside>
 
+    <!-- MOBILE DECK NAVIGATION BAR -->
     <nav class="mobile-bottom-nav">
-      <button class="mobile-nav-item active" data-view="dashboard"><div>⌂</div><span>Overview</span></button>
-      <button class="mobile-nav-item" data-view="customers"><div>♙</div><span>Customers</span></button>
-      <button class="mobile-nav-item" data-view="transactions"><div>▤</div><span>Logs</span></button>
-      <button class="mobile-nav-item" data-view="templates"><div>✦</div><span>Templates</span></button>
-      <button class="mobile-nav-item" data-view="business"><div>⚙</div><span>Profile</span></button>
+      <button class="mobile-nav-item active" data-view="dashboard"><i class="ri-home-5-line"></i><span>Overview</span></button>
+      <button class="mobile-nav-item" data-view="customers"><i class="ri-user-follow-line"></i><span>Customers</span></button>
+      <button class="mobile-nav-item" data-view="transactions"><i class="ri-file-list-3-line"></i><span>Logs</span></button>
+      <button class="mobile-nav-item" data-view="templates"><i class="ri-chat-quote-line"></i><span>Templates</span></button>
+      <button class="mobile-nav-item" data-view="business"><i class="ri-settings-3-line"></i><span>Profile</span></button>
     </nav>
 
+    <!-- MAIN APP WRAPPER INTERFACE -->
     <main>
       <header class="topbar">
         <div>
@@ -52,25 +57,26 @@
           <p class="subtitle">Keep your ledger accurate and business flowing smoothly.</p>
         </div>
         <div class="top-actions">
-          <button class="primary-button" id="globalAddTxBtn"><span>＋</span> Add Transaction</button>
+          <button class="primary-button" id="globalAddTxBtn"><i class="ri-add-line"></i> Add Transaction</button>
         </div>
       </header>
 
+      <!-- VIEW: DASHBOARD OVERVIEW -->
       <div id="view-dashboard" class="app-view active">
         <section class="stats" aria-label="Today's summary">
           <article class="stat-card featured">
-            <div class="stat-label"><span class="stat-icon rupee">₹</span> Today's Net Change</div>
+            <div class="stat-label"><div class="stat-icon-inner"><i class="ri-copper-coin-line"></i></div> Today's Net Change</div>
             <strong id="dashTodayNet">₹0</strong>
             <p>Added across <b id="dashTodayCount">0 logs</b> today</p>
             <div class="spark-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
           </article>
           <article class="stat-card">
-            <div class="stat-label"><span class="stat-icon people">♙</span> Total Collection Today</div>
+            <div class="stat-label"><div class="stat-icon-inner text-green"><i class="ri-arrow-left-down-line"></i></div> Total Collection Today</div>
             <strong id="dashTodayCollection" style="color: var(--green);">₹0</strong>
             <p>Total cash inputs received</p>
           </article>
           <article class="stat-card">
-            <div class="stat-label"><span class="stat-icon message">◉</span> Active Book Balances</div>
+            <div class="stat-label"><div class="stat-icon-inner text-teal"><i class="ri-book-open-line"></i></div> Active Book Balances</div>
             <strong id="dashTotalOutstanding">₹0</strong>
             <p>Total outstanding balance</p>
           </article>
@@ -80,13 +86,13 @@
           <article class="panel">
             <div class="panel-header">
               <div><h2>Recent Activity</h2><p>Latest ledger movements</p></div>
-              <button class="text-button" id="dashViewAllTxBtn">View all <span>→</span></button>
+              <button class="text-button" id="dashViewAllTxBtn">View all <i class="ri-arrow-right-line"></i></button>
             </div>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th style="width: 95px; text-align: left; padding-left: 16px;">Action</th>
+                    <th style="width: 105px; text-align: left; padding-left: 16px;">Action</th>
                     <th>Customer</th>
                     <th>Date</th>
                     <th>Type</th>
@@ -96,37 +102,38 @@
                 <tbody id="dashTxBody"></tbody>
               </table>
               <div class="empty-state" id="dashTxEmpty">
-                <div>₹</div><h3>No transactions logged yet</h3><p>Your data logs will appear right here.</p>
+                <div class="empty-icon"><i class="ri-refund-line"></i></div><h3>No transactions logged yet</h3><p>Your data logs will appear right here.</p>
               </div>
             </div>
           </article>
 
           <aside class="panel send-panel">
             <div class="send-header">
-              <div class="whatsapp-logo">◔</div>
+              <div class="whatsapp-logo"><i class="ri-whatsapp-fill"></i></div>
               <div><h2>WhatsApp Dispatcher</h2><p id="readyCount">0 active today</p></div>
             </div>
             <div class="message-preview">
               <div class="preview-label">
                 <span>MESSAGE PREVIEW</span>
                 <div style="position:relative;">
-                  <button type="button" id="previewTemplateDropdownBtn" class="text-button" style="margin:0; font-size:11px;">Template ▾</button>
+                  <button type="button" id="previewTemplateDropdownBtn" class="text-button" style="margin:0; font-size:11px;">Template <i class="ri-arrow-down-s-line"></i></button>
                   <div class="dropdown-menu" id="previewTemplateMenu"></div>
                 </div>
               </div>
-              <div class="bubble" id="messagePreview">Select a customer below to review message string.</div>
+              <div class="bubble chat-bubble-native" id="messagePreview">Select a customer below to review message string.</div>
             </div>
-            <div class="upi-ready"><span>₹</span><div><strong>Payment link status</strong><p id="upiStatusText">UPI ready</p></div></div>
+            <div class="upi-ready"><i class="ri-qr-code-line"></i><div><strong>Payment link status</strong><p id="upiStatusText">UPI ready</p></div></div>
             <label class="select-label" for="recipientSelect">RECIPIENT</label>
             <div class="select-wrap">
               <span class="recipient-avatar" id="recipientAvatar">—</span>
               <select id="recipientSelect"></select>
             </div>
-            <button class="whatsapp-button" id="sendWhatsAppBtn"><span>◔</span> Launch WhatsApp Link</button>
+            <button class="whatsapp-button" id="sendWhatsAppBtn"><i class="ri-whatsapp-line"></i> Launch WhatsApp Link</button>
           </aside>
         </section>
       </div>
 
+      <!-- VIEW: CUSTOMER MASTER DIRECTORY -->
       <div id="view-customers" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
@@ -139,7 +146,7 @@
                 <option value="low">Outstanding (Low → High)</option>
                 <option value="recent">Recent Activity</option>
               </select>
-              <button class="primary-button" id="createCustomerQuickBtn">＋ New Customer</button>
+              <button class="primary-button" id="createCustomerQuickBtn"><i class="ri-user-add-line"></i> New Customer</button>
             </div>
           </div>
           <div class="table-wrap">
@@ -148,22 +155,23 @@
               <tbody id="customerTableBody"></tbody>
             </table>
             <div class="empty-state" id="customerTableEmpty">
-              <div>♙</div><h3>No accounts match criteria</h3><p>Create or adjust search terms.</p>
+              <div class="empty-icon"><i class="ri-search-eye-line"></i></div><h3>No accounts match criteria</h3><p>Create or adjust search terms.</p>
             </div>
           </div>
         </article>
       </div>
 
+      <!-- VIEW: ITEMIZED INDIVIDUAL LEDGER -->
       <div id="view-ledger" class="app-view">
-        <div style="margin-bottom:15px;"><button class="text-button" id="ledgerBackBtn">← Back to Directory</button></div>
+        <div style="margin-bottom:15px;"><button class="text-button" id="ledgerBackBtn"><i class="ri-arrow-left-line"></i> Back to Directory</button></div>
         <div class="ledger-profile-header">
           <div>
             <h2 id="ledgerCustName">Ram Sharma</h2>
             <p id="ledgerCustPhone" style="color:var(--muted); margin:4px 0 0;">+91 9876543210</p>
           </div>
-          <div class="top-actions">
-            <a href="#" class="primary-button" id="ledgerCallBtn" style="background:#0284c7; text-decoration:none;">📞 Call</a>
-            <button class="primary-button" id="ledgerWaBtn" style="background:var(--wa);">💬 WhatsApp</button>
+          <div class="top-actions communication-pill-group">
+            <a href="#" class="comms-pill call-pill" id="ledgerCallBtn"><i class="ri-phone-fill"></i> Call</a>
+            <button class="comms-pill whatsapp-pill" id="ledgerWaBtn"><i class="ri-whatsapp-fill"></i> WhatsApp</button>
           </div>
         </div>
         <section class="stats" style="margin-top:15px;">
@@ -184,9 +192,9 @@
           <div class="panel-header">
             <div><h2>Itemized Statement</h2></div>
             <div class="top-actions">
-              <button class="primary-button" id="ledgerAddDebtBtn" style="background:#e11d48; padding:8px 12px;">＋ Debt</button>
-              <button class="primary-button" id="ledgerAddPaymentBtn" style="background:var(--green); padding:8px 12px;">＋ Payment</button>
-              <button class="secondary-button" id="ledgerPrintBtn" style="margin:0; padding:8px 12px;">🖨️ Print</button>
+              <button class="primary-button" id="ledgerAddDebtBtn" style="background:#e11d48; padding:8px 12px;"><i class="ri-add-circle-line"></i> Debt</button>
+              <button class="primary-button" id="ledgerAddPaymentBtn" style="background:var(--green); padding:8px 12px;"><i class="ri-checkbox-circle-line"></i> Payment</button>
+              <button class="secondary-button" id="ledgerPrintBtn" style="margin:0; padding:8px 12px;"><i class="ri-printer-line"></i> Print</button>
             </div>
           </div>
           <div class="table-wrap">
@@ -198,10 +206,11 @@
         </article>
       </div>
 
+      <!-- VIEW: HISTORICAL LOGS & SECTION EXPORTS -->
       <div id="view-transactions" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
-            <div><h2>Historical Ledger Logs</h2></div>
+            <div><h2>Historical Ledger Logs</h2><p>Filter or download items for specific date section blocks</p></div>
             <div class="header-search-actions">
               <input type="text" id="txSearchInput" placeholder="Filter logs..." class="view-search-input" />
               <input type="date" id="txDateFilterInput" class="view-sort-select" style="max-width:140px;" />
@@ -210,6 +219,8 @@
                 <option value="DEBT">🔴 Debts Only</option>
                 <option value="CREDIT">🟢 Payments Only</option>
               </select>
+              <!-- STATEMENT DOWNLOAD EMPOWERMENT BUTTON -->
+              <button class="secondary-button" id="txSectionDownloadBtn" style="background: var(--paper); border: 1px solid #dfe4e2; font-weight: 700;"><i class="ri-download-cloud-2-line"></i> Export CSV</button>
             </div>
           </div>
           <div class="table-wrap">
@@ -221,10 +232,11 @@
         </article>
       </div>
 
+      <!-- VIEW: MESSAGE TEMPLATES -->
       <div id="view-templates" class="app-view">
         <article class="panel" style="margin-bottom: 16px; background: #fafbfb; border-color: var(--line);">
           <div style="padding: 16px 20px;">
-            <h3 style="margin: 0 0 8px 0; font-family: 'Manrope'; font-size: 13px; color: var(--teal); letter-spacing: 0.5px; text-transform: uppercase;">📋 Template Keys Reference Guide</h3>
+            <h3 style="margin: 0 0 8px 0; font-family: 'Manrope'; font-size: 13px; color: var(--teal); letter-spacing: 0.5px; text-transform: uppercase;"><i class="ri-key-2-line"></i> Template Keys Reference Guide</h3>
             <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--muted); line-height: 1.4;">Use these exact keys in your template blocks below to pull figures dynamically:</p>
             <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px;">
               <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Customer Name:</b> <code>{name}</code></span>
@@ -241,12 +253,13 @@
         <article class="panel">
           <div class="panel-header">
             <div><h2>Message Templates Workspace</h2></div>
-            <button class="primary-button" id="templateCreateBtn">＋ Custom Template</button>
+            <button class="primary-button" id="templateCreateBtn"><i class="ri-add-box-line"></i> Custom Template</button>
           </div>
           <div style="padding:20px; display:grid; gap:16px;" id="templatesWorkspaceGrid"></div>
         </article>
       </div>
 
+      <!-- VIEW: BUSINESS PROFILE -->
       <div id="view-business" class="app-view">
         <article class="panel" style="max-width:700px; margin:0 auto;">
           <div class="panel-header">
@@ -264,57 +277,69 @@
             <div class="form-row">
               <label>Merchant Contact Mobile<input name="businessPhone" /></label>
             </div>
-            <div style="text-align:right;"><button class="primary-button" type="submit" style="padding:12px 28px; width: 100%;">Commit Settings</button></div>
+            <div style="text-align:right;"><button class="primary-button" type="submit" style="padding:12px 28px; width: 100%;"><i class="ri-save-3-line"></i> Commit Settings</button></div>
           </form>
         </article>
       </div>
     </main>
   </div>
 
+  <!-- MODAL: HYPER-SIMPLIFIED ENTRY DIALOG LAYER -->
   <div class="modal-backdrop" id="txModal" aria-hidden="true">
-    <section class="modal" role="dialog" aria-modal="true" style="position:relative;">
-      <div class="modal-head"><div><p class="eyebrow" id="txModalEyebrow">LEDGER LOG</p><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
-      <form id="txModalForm">
-        <label>Step 1: Locate Account</label>
-        <div style="position:relative; width:100%;">
-          <input type="text" id="txModalSearchCust" placeholder="🔍 Type name or mobile (e.g. V, Vi...)" autocomplete="off" />
-          <div id="txModalSearchResults" class="dropdown-menu" style="width:100%; max-height:160px; overflow-y:auto; left:0; right:0; top:100%;"></div>
-        </div>
+    <section class="modal" role="dialog" aria-modal="true" style="max-width: 440px;">
+      <div class="modal-head" style="margin-bottom: 12px;"><div><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
+      <form id="txModalForm" style="display: flex; flex-direction: column; gap: 12px;">
         
-        <div id="txModalRecentContainer" style="margin-top:10px; display:none;">
-          <span style="font-size:10px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px;">OPTIONS:</span>
-          <div id="txModalRecentBadges" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+        <!-- ROW 1: ACCOUNT LOCATOR -->
+        <div>
+          <label style="font-weight: 700; margin-bottom: 4px;">Customer Name</label>
+          <div style="position:relative; width:100%;">
+            <input type="text" id="txModalSearchCust" placeholder="🔍 Search by name or phone..." autocomplete="off" />
+            <div id="txModalSearchResults" class="dropdown-menu" style="width:100%; max-height:150px; overflow-y:auto; left:0; right:0; top:100%; box-shadow: var(--shadow); border-radius: 12px;"></div>
+          </div>
+          
+          <div id="txModalAccountStatus" class="upi-ready" style="display:none; justify-content: space-between; margin-top: 6px; background:#f0f9ff; padding: 8px 12px;">
+            <div style="display:flex; align-items:center; gap:8px;"><span>👤</span><strong id="txModalSelectedName" style="font-size:13px;">—</strong></div>
+            <button type="button" class="text-button" id="txModalClearCustBtn" style="margin:0; padding:2px 8px; font-size:11px; background:#e0f2fe; color:#0369a1;">Change</button>
+          </div>
         </div>
 
-        <div id="txModalAccountStatus" class="upi-ready" style="display:none; margin:10px 0 0; background:#f0f9ff; border-color:#bae6fd;">
-          <span>👤</span>
-          <div><strong id="txModalSelectedName">Unlinked</strong><p id="txModalSelectedBalance">Outstanding: ₹0</p></div>
-          <button type="button" class="secondary-button" id="txModalClearCustBtn" style="margin:0; padding:6px 12px; font-size:11px; background:#eaf5f2; color:var(--teal);">Change</button>
+        <!-- ROW 2: CLASSIFICATION PILL SWITCHER -->
+        <div>
+          <label style="font-weight: 700; margin-bottom: 6px;">Classification</label>
+          <div class="tx-binary-toggle-container">
+            <button type="button" class="binary-pill-btn pill-debt active" data-type="DEBT">🔴 DEBIT (He Owes)</button>
+            <button type="button" class="binary-pill-btn pill-credit" data-type="CREDIT">🟢 CREDIT (Received)</button>
+          </div>
+          <!-- Internal tracking state vector pointer -->
+          <input type="hidden" name="type" id="txModalTypeHidden" value="DEBT" />
         </div>
 
-        <div id="txModalFields" style="display:grid; gap:14px; margin-top:12px;">
-          <div class="form-row">
-            <label>Classification
-              <select name="type" id="txModalTypeSelect">
-                <option value="DEBT" style="color: #e11d48; font-weight: bold;">🔴 Debt (+) Customer Owes Me</option>
-                <option value="CREDIT" style="color: var(--green); font-weight: bold;">🟢 Payment (-) Cash Received</option>
-              </select>
-            </label>
-            <label>Amount (₹)<input name="amount" type="number" min="0.01" step="0.01" required /></label>
+        <!-- ROW 3: CASH VALUE ENTRY -->
+        <div>
+          <label style="font-weight: 700; margin-bottom: 4px;">Amount (₹)</label>
+          <input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" style="font-size: 18px; font-weight: 700; padding: 10px;" required />
+        </div>
+
+        <!-- ROW 4: CONTEXT INFORMATION META -->
+        <div class="form-row" style="grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div>
+            <label style="font-weight: 700; margin-bottom: 4px;">Effective Date</label>
+            <input name="date" type="date" required />
           </div>
-          <div class="form-row">
-            <label>Effective Date<input name="date" type="date" required /></label>
-            <label>Description / Note<input name="description" id="txModalDesc" placeholder="Optional" /></label>
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="cancel-button" id="txModalCancelBtn">Dismiss</button>
-            <button class="primary-button" type="submit">Commit Log</button>
+          <div>
+            <label style="font-weight: 700; margin-bottom: 4px;">Description</label>
+            <input name="description" id="txModalDesc" placeholder="Poha, Rice, Milk etc." />
           </div>
         </div>
+
+        <!-- ROW 5: TRIGGER ACTION COMMIT -->
+        <button class="primary-button" type="submit" style="width: 100%; padding: 14px; font-size: 14px; margin-top: 4px; font-weight: 700;"><i class="ri-checkbox-circle-fill"></i> Save Entry</button>
       </form>
     </section>
   </div>
 
+  <!-- MODAL: INITIALIZE NEW CUSTOMER -->
   <div class="modal-backdrop" id="customerQuickModal" aria-hidden="true">
     <section class="modal" role="dialog" style="max-width:400px;">
       <div class="modal-head"><div><p class="eyebrow">DIRECTORY</p><h2>Initialize New Account</h2></div><button class="close-modal" id="custQuickCloseBtn">×</button></div>
@@ -333,6 +358,7 @@
     </section>
   </div>
 
+  <!-- MODAL: TEMPLATE WORKSPACE CUSTOMIZATION -->
   <div class="modal-backdrop" id="templateModal" aria-hidden="true">
     <section class="modal" role="dialog">
       <div class="modal-head"><div><p class="eyebrow">DASHBOARD</p><h2 id="templateModalTitle">Modify Template</h2></div><button class="close-modal" id="templateModalCloseBtn">×</button></div>
@@ -349,6 +375,7 @@
     </section>
   </div>
 
+  <!-- TOAST FEEDBACK MODULE -->
   <div class="toast" id="toast"><span>✓</span><div><strong id="toastTitle">Success</strong><p id="toastMessage">Done.</p></div></div>
   <script src="app.js"></script>
 </body>
