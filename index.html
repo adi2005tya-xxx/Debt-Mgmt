@@ -36,7 +36,7 @@
       </div>
     </aside>
 
-    <nav class="mobile-bottom-nav" id="mobileNavigationContainer">
+    <nav class="mobile-bottom-nav">
       <button class="mobile-nav-item active" data-view="dashboard"><div>⌂</div><span>Overview</span></button>
       <button class="mobile-nav-item" data-view="customers"><div>♙</div><span>Customers</span></button>
       <button class="mobile-nav-item" data-view="transactions"><div>▤</div><span>Logs</span></button>
@@ -86,11 +86,11 @@
               <table>
                 <thead>
                   <tr>
-                    <th style="width: 95px; text-align: left;">Action</th>
+                    <th style="width: 95px; text-align: left; padding-left: 16px;">Action</th>
                     <th>Customer</th>
                     <th>Date</th>
                     <th>Type</th>
-                    <th>Amount</th>
+                    <th style="text-align: right; padding-right: 16px;">Amount</th>
                   </tr>
                 </thead>
                 <tbody id="dashTxBody"></tbody>
@@ -110,7 +110,7 @@
               <div class="preview-label">
                 <span>MESSAGE PREVIEW</span>
                 <div style="position:relative;">
-                  <button id="previewTemplateDropdownBtn">Template ▾</button>
+                  <button type="button" id="previewTemplateDropdownBtn" class="text-button" style="margin:0; font-size:11px;">Template ▾</button>
                   <div class="dropdown-menu" id="previewTemplateMenu"></div>
                 </div>
               </div>
@@ -225,15 +225,15 @@
         <article class="panel" style="margin-bottom: 16px; background: #fafbfb; border-color: var(--line);">
           <div style="padding: 16px 20px;">
             <h3 style="margin: 0 0 8px 0; font-family: 'Manrope'; font-size: 13px; color: var(--teal); letter-spacing: 0.5px; text-transform: uppercase;">📋 Template Keys Reference Guide</h3>
-            <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--muted); line-height: 1.4;">Use these exact keys in your text box layers below to create your templates dynamically:</p>
+            <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--muted); line-height: 1.4;">Use these exact keys in your template blocks below to pull figures dynamically:</p>
             <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px;">
               <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Customer Name:</b> <code>{name}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Today's Entry Amount:</b> <code>{today_amount}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Total Outstanding Balance:</b> <code>{total_debt}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Business Name:</b> <code>{shop_name}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>UPI Address ID:</b> <code>{upi_id}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Automated UPI Pay Link:</b> <code>{payment_link}</code></span>
-              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Current Entry Date:</b> <code>{date}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Today's Amount:</b> <code>{today_amount}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Total Outstanding:</b> <code>{total_debt}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Shop Name:</b> <code>{shop_name}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>UPI Address:</b> <code>{upi_id}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>UPI Payment Link:</b> <code>{payment_link}</code></span>
+              <span style="background:#fff; border:1px solid var(--line); padding:6px 10px; border-radius:6px;"><b>Date:</b> <code>{date}</code></span>
             </div>
           </div>
         </article>
@@ -275,7 +275,8 @@
     <section class="modal" role="dialog" aria-modal="true">
       <div class="modal-head"><div><p class="eyebrow" id="txModalEyebrow">LEDGER LOG</p><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
       <form id="txModalForm">
-        <label>Step 1: Locate Account<input type="text" id="txModalSearchCust" placeholder="🔍 Type complete customer name or phone..." autocomplete="off" /></label>
+        <label>Step 1: Locate Account</label>
+        <input type="text" id="txModalSearchCust" placeholder="🔍 Type complete customer name or phone..." autocomplete="off" />
         
         <div id="txModalRecentContainer" style="margin-top:-4px; display:none;">
           <span style="font-size:10px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px;">OPTIONS:</span>
@@ -285,7 +286,7 @@
         <div id="txModalAccountStatus" class="upi-ready" style="display:none; margin:5px 0 0; background:#f0f9ff; border-color:#bae6fd;">
           <span>👤</span>
           <div><strong id="txModalSelectedName">Unlinked</strong><p id="txModalSelectedBalance">Outstanding: ₹0</p></div>
-          <button type="button" id="txModalClearCustBtn" style="color:#0284c7;">Change</button>
+          <button type="button" class="secondary-button" id="txModalClearCustBtn" style="margin:0; padding:6px 12px; font-size:11px; background:#eaf5f2; color:var(--teal);">Change</button>
         </div>
 
         <div id="txModalFields" style="display:grid; gap:14px; margin-top:5px;">
