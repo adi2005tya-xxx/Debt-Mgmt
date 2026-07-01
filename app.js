@@ -20,7 +20,7 @@ const state = {
   activeTxModalTargetPhone: null
 };
 
-// --- UTILITY RE-WRITERS ---
+// --- CORE UTILITY HELPERS ---
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (val) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
@@ -148,7 +148,7 @@ function renderCurrentView() {
   }
 }
 
-// --- RENDERING PIPELINES WITH RED / GREEN COLOR CODING OVERHAUL ---
+// --- COLORED SYSTEM RENDER CHANNELS ---
 function renderDashboardView() {
   const aggs = getSystemAggregateBalances();
   $('#dashTodayNet').textContent = `₹${money(aggs.todayNetChange)}`;
@@ -173,7 +173,6 @@ function renderDashboardView() {
       <td><strong>${escapeHtml(cust.name)}</strong></td>
       <td>${formatDate(t.date)}</td>
       <td>
-        <!-- Dynamically render RED for Debt / GREEN for Payment -->
         <span class="status ${isDebt ? 'pending' : 'sent'}">
           <i></i>${isDebt ? '🔴 DEBT' : '🟢 PAYMENT'}
         </span>
@@ -362,23 +361,35 @@ function hydrateRecentCustomerBadges() {
   $('#txModalRecentBadges').innerHTML = badgesHtml + `<button type="button" class="primary-button" id="txModalCreateNewCustBtn" data-name="" style="padding:4px 10px; font-size:11px; background:var(--ink);">＋ New Account</button>`;
 }
 
-// --- MOUNTED INITIALIZATION ROUTINES ---
+// --- COMPONENT EVENT LIFECYCLE MOUNT ---
 document.addEventListener('DOMContentLoaded', () => {
-  // FIXED TOUCH BAR NAVIGATION LISTENERS
-  const navButtons = document.querySelectorAll('.nav-item, .mobile-bottom-nav button, .mobile-nav-item');
-  navButtons.forEach(btn => {
+  // HARD RE-BINDING ON TOUCH NAVIGATION NODES FOR SMARTPHONES
+  const mobileNavContainer = document.getElementById('mobileNavigationContainer');
+  if (mobileNavContainer) {
+    mobileNavContainer.addEventListener('click', (e) => {
+      const targetButton = e.target.closest('.mobile-nav-item');
+      if (targetButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        const viewName = targetButton.getAttribute('data-view');
+        if (viewName) navigateToView(viewName);
+      }
+    });
+  }
+
+  // Desktop side system bar assignments fallback links
+  const desktopNavItems = document.querySelectorAll('.sidebar .nav-item');
+  desktopNavItems.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      e.stopPropagation();
-      const targetView = btn.getAttribute('data-view');
-      if (targetView) navigateToView(targetView);
+      navigateToView(btn.getAttribute('data-view'));
     });
   });
 
   $('#navBrand').addEventListener('click', (e) => { e.preventDefault(); navigateToView('dashboard'); });
   $('#sidebarProfileBtn').addEventListener('click', () => navigateToView('business'));
 
-  // Quick Row Send Column Actions Listener Hooks
+  // Quick Action row dispatcher loops
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('quick-row-send-btn')) {
       const txId = e.target.dataset.txid;
@@ -401,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#mobileDeviceContactImportBtn').addEventListener('click', async () => {
     if (!navigator.contacts || !navigator.contacts.select) {
-      showToast('Notice', 'Smartphone permissions block reading APIs. Fill fields manually below.');
+      showToast('Notice', 'Smartphone platform prevents active address reading APIs. Configure fields manually.');
       return;
     }
     try {
@@ -413,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Complete', 'Coordinates mapped.');
       }
     } catch (err) {
-      showToast('Interrupted', 'Manual mode.');
+      showToast('Interrupted', 'Manual input ready.');
     }
   });
 
@@ -447,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#ledgerAddPaymentBtn').addEventListener('click', () => openTransactionModal(state.selectedLedgerCustomerPhone, 'CREDIT'));
   $('#ledgerPrintBtn').addEventListener('click', () => { window.print(); });
 
-  // STRICT LOOKUP MATCH CONTROL ENGINE
+  // ACCOUNT SELECTION STRICT FILTER AND MANUALLY LINK ACTIONS
   $('#txModalSearchCust').addEventListener('input', (e) => {
     const txt = e.target.value.trim();
     if (!txt) {
