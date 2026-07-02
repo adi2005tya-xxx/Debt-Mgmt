@@ -301,6 +301,10 @@ td { padding: 14px 20px; border-top: 1px solid #f2f4f3; font-size: 13px; vertica
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15,28,25,.4); display: none; place-items: center; padding: 16px; z-index: 200; backdrop-filter: blur(4px); }
 .modal-backdrop.open { display: grid; }
 .modal { width: min(480px, 100%); background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+.modal label { font-size: 12px; font-weight: 700; color: #404543; margin-bottom: 4px; display: block;}
+.modal-head h2 { font-size: 18px; font-family: 'Manrope'; margin: 0; }
+.close-modal { border: 0; background: #f1f4f3; border-radius: 50%; width: 32px; height: 32px; font-size: 20px; cursor: pointer; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
 .id-input { display: flex; border: 1px solid #dfe4e2; border-radius: 12px; overflow: hidden; background: #fff; }
 .id-input span { display: grid; place-items: center; width: 42px; background: #f4f7f6; color: var(--teal); font-weight: 800; border-right: 1px solid #dfe4e2; }
