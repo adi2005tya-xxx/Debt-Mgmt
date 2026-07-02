@@ -174,7 +174,7 @@ main { padding: 30px 32px; min-width: 0; padding-bottom: 60px; }
 }
 .text-button:hover { background: #eaf5f2; }
 
-/* --- PREMIUM PANEL CONTAINER AND CORNERS --- */
+/* --- PANELS --- */
 .panel { 
   background: #fff; 
   border: 1px solid var(--line); 
@@ -193,7 +193,7 @@ table { width: 100%; border-collapse: collapse; }
 th { text-align: left; padding: 12px 20px; color: #8a9391; font-size: 10px; letter-spacing: .6px; text-transform: uppercase; background: #fbfcfc; border-bottom: 1px solid var(--line); }
 td { padding: 14px 20px; border-top: 1px solid #f2f4f3; font-size: 13px; vertical-align: middle; }
 
-/* --- PREMIUM DYNAMIC BINARY SWITCH BUTTONS --- */
+/* --- TOGGLE BUTTONS --- */
 .tx-binary-toggle-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -226,7 +226,7 @@ td { padding: 14px 20px; border-top: 1px solid #f2f4f3; font-size: 13px; vertica
   box-shadow: 0 2px 8px rgba(22,163,74,0.1);
 }
 
-/* --- WHATSAPP MESSAGE BUBBLE GRAPHICS --- */
+/* --- WHATSAPP LOGO & BUBBLE --- */
 .message-preview { background: #efeae2; border: 1px solid #d1d7d4; border-radius: 14px; padding: 14px; }
 .chat-bubble-native {
   position: relative;
@@ -252,7 +252,7 @@ td { padding: 14px 20px; border-top: 1px solid #f2f4f3; font-size: 13px; vertica
   border-color: transparent #ffffff transparent transparent;
 }
 
-/* --- MOBILE COMMS COUPLING PILLS --- */
+/* --- COMMUNICATION PILLS --- */
 .communication-pill-group { display: flex; gap: 8px; }
 .comms-pill {
   display: inline-flex;
@@ -271,7 +271,7 @@ td { padding: 14px 20px; border-top: 1px solid #f2f4f3; font-size: 13px; vertica
 .whatsapp-pill { background: #e6f6ee; color: #16a34a; }
 .whatsapp-pill:hover { background: #dcfce7; }
 
-/* --- OTHER CORE UI DEFINITIONS --- */
+/* --- OTHER UI DEFINITIONS --- */
 .modal input, .modal textarea, .modal select, #businessPageForm input { 
   width: 100%; border: 1px solid #dfe4e2; border-radius: 12px; padding: 12px; font: 500 14px 'DM Sans', sans-serif; outline: 0; color: var(--ink); background: #fff;
 }
@@ -310,6 +310,13 @@ td { padding: 14px 20px; border-top: 1px solid #f2f4f3; font-size: 13px; vertica
 .empty-state { padding: 40px; text-align: center; }
 .empty-icon { font-size: 36px; color: var(--muted); margin-bottom: 8px; }
 
+.app-view { display: none; }
+.app-view.active { display: block; }
+.filters-header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.header-search-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.view-search-input { flex: 1; min-width: 150px; }
+.view-sort-select { min-width: 140px; }
+
 /* --- EXPLICIT MOBILE LAYOUT BREAKPOINT SYSTEM --- */
 @media(max-width: 720px) {
   .app-shell { display: block; }
@@ -347,4 +354,14 @@ td { padding: 14px 20px; border-top: 1px solid #f2f4f3; font-size: 13px; vertica
   table { min-width: 540px; }
   
   .modal { width: 100%; border-radius: 20px 20px 0 0; position: fixed; bottom: 0; left: 0; right: 0; max-height: 85vh; padding: 20px 16px; }
+}
+
+@media print {
+  body { background: #fff; color: #000; font-size: 12px; }
+  .sidebar, .mobile-bottom-nav, .topbar, .top-actions, .primary-button, .secondary-button, .row-menu, .autosave { display: none !important; }
+  .app-shell { display: block; }
+  main { padding: 0; }
+  .panel { border: 0; box-shadow: none; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #000 !important; padding: 6px 10px !important; }
 }
