@@ -23,9 +23,7 @@ const state = {
   activeTxModalTargetPhone: null
 };
 
-// --- LEARNING HUB: ASYNCHRONOUS STORAGE GATEWAY ---
-// This decoupled repository patterns perfectly mimics cloud query delays.
-// When transitioning to Firebase/Supabase SDK, you will ONLY modify the inner execution blocks below.
+// --- MULTI-ACCOUNT ASYNCHRONOUS DATA GATEWAY (CLOUD ABSTRACT) ---
 const DB = {
   async saveCustomer(phone, payload) {
     state.customers[phone] = payload;
@@ -49,7 +47,7 @@ const DB = {
   }
 };
 
-// --- CORE UTILITY COMPILERS ---
+// --- CORE COMPILER HELPERS ---
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (val) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
@@ -373,7 +371,6 @@ function openModal(modalId) {
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open-freeze');
-    // Auto-focus soft keyboard into active locator field instantly
     setTimeout(() => {
       const firstInput = modal.querySelector('input:not([type="hidden"])');
       if (firstInput) firstInput.focus();
@@ -402,7 +399,6 @@ function resetTxModal() {
   $('#txModalSearchResults').style.display = 'none';
   $('#txModalSearchResults').innerHTML = '';
   
-  // Restore default Debit selection button state layout mechanics
   $$('.binary-pill-btn').forEach(b => b.classList.remove('active'));
   $('.binary-pill-btn.pill-debt').classList.add('active');
   $('#txModalTypeHidden').value = 'DEBT';
@@ -481,7 +477,6 @@ function bindApplicationEvents() {
     const dateF = $('#txDateFilterInput').value;
     const typeF = $('#txTypeFilterSelect').value;
     
-    // Extract strictly the filtered view set context rows matching the interface state
     let filteredList = [...state.transactions];
     if (query) filteredList = filteredList.filter(t => (t.description || '').toLowerCase().includes(query) || t.customerPhone.includes(query));
     if (dateF) filteredList = filteredList.filter(t => t.date === dateF);
@@ -492,14 +487,12 @@ function bindApplicationEvents() {
       return;
     }
 
-    // Compile pure structured matrix spreadsheet representation format rows strings
     let csvData = 'Date,Customer Name,Phone Number,Classification Type,Amount,Description\n';
     filteredList.forEach(t => {
       const c = state.customers[t.customerPhone] || { name: 'Deleted Profile', phone: t.customerPhone };
       csvData += `"${formatDate(t.date)}","${c.name.replaceAll('"', '""')}","+91${c.phone}","${t.type}",${t.amount},"${(t.description || 'Reference Entry').replaceAll('"', '""')}"\n`;
     });
 
-    // Fire low-overhead binary blob local browser system trigger down link
     const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
     const targetUrl = URL.createObjectURL(blob);
     const triggerLink = document.createElement('a');
@@ -659,7 +652,6 @@ function bindApplicationEvents() {
     `).join('');
   });
 
-  // Intercept selection from autocompleted predictive layout row items
   document.body.addEventListener('click', (e) => {
     const rowBtn = e.target.closest('.search-autocomplete-row-btn');
     if (rowBtn && rowBtn.dataset.phone) {
@@ -670,7 +662,6 @@ function bindApplicationEvents() {
     if (badge) populateTxModalAccountSelection(badge.dataset.phone);
   });
 
-  // Close predictive autocomplete menus when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#txModalSearchCust') && !e.target.closest('#txModalSearchResults')) {
       if ($('#txModalSearchResults')) $('#txModalSearchResults').style.display = 'none';
@@ -680,7 +671,7 @@ function bindApplicationEvents() {
   $('#txModalForm').addEventListener('submit', (e) => {
     e.preventDefault();
     if (!state.activeTxModalTargetPhone) {
-      alert('Please locate or bind a matching customer index directory profile.');
+      alert('Please locate or bind a matching customer profile account register.');
       return;
     }
     const fData = new FormData(e.target);
@@ -715,8 +706,8 @@ function bindApplicationEvents() {
     const name = fData.get('name').trim();
     let phone = fData.get('phone').replace(/\D/g, '');
 
-    if (phone.length !== 10) return alert('Enter a legal, structural 10-digit primary mobile vector.');
-    if (state.customers[phone]) return alert('An account registry allocation matching this key already exists.');
+    if (phone.length !== 10) return alert('Enter a legal 10-digit primary mobile vector.');
+    if (state.customers[phone]) return alert('An account registry matching this phone number already exists.');
 
     DB.saveCustomer(phone, { name, phone }).then(() => {
       closeModal('customerQuickModal');
