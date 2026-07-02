@@ -49,7 +49,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow" id="todayLabel">TODAY</p>
-          <h1 id="welcomeOwner">Good Evening, Aditya <span>👋</span></h1>
+          <h1 id="welcomeOwner">Good evening, Aditya <span>👋</span></h1>
           <p class="subtitle">Keep your ledger accurate and business flowing smoothly.</p>
         </div>
         <div class="top-actions">
@@ -250,14 +250,14 @@
   </div>
 
   <div class="modal-backdrop" id="txModal" aria-hidden="true">
-    <section class="modal" role="dialog" aria-modal="true" style="max-width: 440px;">
+    <section class="modal" role="dialog" aria-modal="true">
       <div class="modal-head" style="margin-bottom: 12px;"><div><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
       <form id="txModalForm" style="display: flex; flex-direction: column; gap: 12px;">
         
         <div>
           <label style="font-weight: 700; margin-bottom: 4px;">Customer Name</label>
           <div style="position:relative; width:100%;">
-            <input type="text" id="txModalSearchCust" placeholder="🔍 Type name or phone to filter..." autocomplete="off" />
+            <input type="text" id="txModalSearchCust" placeholder="🔍 Search name or number..." autocomplete="off" />
             <div id="txModalSearchResults" class="dropdown-menu" style="width:100%; max-height:150px; overflow-y:auto; left:0; right:0; top:100%; box-shadow: var(--shadow); border-radius: 12px;"></div>
           </div>
           
@@ -270,15 +270,15 @@
         <div>
           <label style="font-weight: 700; margin-bottom: 6px;">Classification</label>
           <div class="tx-binary-toggle-container">
-            <button type="button" class="binary-pill-btn pill-debt active" data-type="DEBT">Debit (Red)</button>
-            <button type="button" class="binary-pill-btn pill-credit" data-type="CREDIT">Credit (Green)</button>
+            <button type="button" class="binary-pill-btn pill-debt active" data-type="DEBT">🔴 DEBIT (He Owes)</button>
+            <button type="button" class="binary-pill-btn pill-credit" data-type="CREDIT">🟢 CREDIT (Received)</button>
           </div>
           <input type="hidden" name="type" id="txModalTypeHidden" value="DEBT" />
         </div>
 
         <div>
           <label style="font-weight: 700; margin-bottom: 4px;">Amount (₹)</label>
-          <input name="amount" id="txModalAmountField" type="number" min="0.01" step="0.01" placeholder="0.00" style="font-size: 18px; font-weight: 700; padding: 10px;" required />
+          <input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" style="font-size: 18px; font-weight: 700; padding: 10px;" required />
         </div>
 
         <div class="form-row" style="grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -288,7 +288,7 @@
           </div>
           <div>
             <label style="font-weight: 700; margin-bottom: 4px;">Description</label>
-            <input name="description" id="txModalDesc" placeholder="Optional details..." />
+            <input name="description" id="txModalDesc" placeholder="Optional notes..." />
           </div>
         </div>
 
@@ -306,7 +306,7 @@
         </button>
         
         <label>Customer Full Name<input name="name" id="quickCustNameField" placeholder="Ramesh Sharma" required /></label>
-        <label>WhatsApp Contact Number<div class="phone-input"><span>+91</span><input name="phone" id="quickCustPhoneField" inputmode="numeric" maxlength="10" placeholder="9876543210" required /></div></label>
+        <label>WhatsApp Contact Number<div class="phone-input"><span>+91</span><input name="phone" inputmode="numeric" maxlength="10" placeholder="9876543210" required /></div></label>
         <div class="modal-actions">
           <button type="button" class="cancel-button" id="custQuickCancelBtn">Cancel</button>
           <button class="primary-button" type="submit">Save Account</button>
