@@ -8,19 +8,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <!-- CRISP VECTOR REMIX ICONS -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="app-shell">
-    <!-- SIDEBAR NAVIGATION -->
     <aside class="sidebar">
       <a class="brand" href="#" id="navBrand">
         <span class="brand-mark">C</span>
         <span><strong>Cred</strong>Track</span>
       </a>
-      <nav class="nav" aria-label="Main navigation">
+      <nav class="nav" id="desktopNavContainer" aria-label="Main navigation">
         <button class="nav-item active" data-view="dashboard"><i class="ri-home-5-line"></i> Overview</button>
         <button class="nav-item" data-view="customers"><i class="ri-user-follow-line"></i> Customers</button>
         <button class="nav-item" data-view="transactions"><i class="ri-file-list-3-line"></i> Transactions</button>
@@ -39,8 +37,7 @@
       </div>
     </aside>
 
-    <!-- MOBILE DECK NAVIGATION BAR -->
-    <nav class="mobile-bottom-nav">
+    <nav class="mobile-bottom-nav" id="mobileNavContainer">
       <button class="mobile-nav-item active" data-view="dashboard"><i class="ri-home-5-line"></i><span>Overview</span></button>
       <button class="mobile-nav-item" data-view="customers"><i class="ri-user-follow-line"></i><span>Customers</span></button>
       <button class="mobile-nav-item" data-view="transactions"><i class="ri-file-list-3-line"></i><span>Logs</span></button>
@@ -48,7 +45,6 @@
       <button class="mobile-nav-item" data-view="business"><i class="ri-settings-3-line"></i><span>Profile</span></button>
     </nav>
 
-    <!-- MAIN APP WRAPPER INTERFACE -->
     <main>
       <header class="topbar">
         <div>
@@ -61,7 +57,6 @@
         </div>
       </header>
 
-      <!-- VIEW: DASHBOARD OVERVIEW -->
       <div id="view-dashboard" class="app-view active">
         <section class="stats" aria-label="Today's summary">
           <article class="stat-card featured">
@@ -109,7 +104,6 @@
         </section>
       </div>
 
-      <!-- VIEW: CUSTOMER MASTER DIRECTORY -->
       <div id="view-customers" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
@@ -137,7 +131,6 @@
         </article>
       </div>
 
-      <!-- VIEW: ITEMIZED INDIVIDUAL LEDGER -->
       <div id="view-ledger" class="app-view">
         <div style="margin-bottom:15px;"><button class="text-button" id="ledgerBackBtn"><i class="ri-arrow-left-line"></i> Back to Directory</button></div>
         <div class="ledger-profile-header">
@@ -182,7 +175,6 @@
         </article>
       </div>
 
-      <!-- VIEW: HISTORICAL LOGS -->
       <div id="view-transactions" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
@@ -207,7 +199,6 @@
         </article>
       </div>
 
-      <!-- VIEW: MESSAGE TEMPLATES -->
       <div id="view-templates" class="app-view">
         <article class="panel" style="margin-bottom: 16px; background: #fafbfb; border-color: var(--line);">
           <div style="padding: 16px 20px;">
@@ -234,7 +225,6 @@
         </article>
       </div>
 
-      <!-- VIEW: BUSINESS PROFILE -->
       <div id="view-business" class="app-view">
         <article class="panel" style="max-width:700px; margin:0 auto;">
           <div class="panel-header">
@@ -259,17 +249,15 @@
     </main>
   </div>
 
-  <!-- MODAL: HIGH-SPEED SIMPLIFIED TRANSACTION ENTRY FORM -->
   <div class="modal-backdrop" id="txModal" aria-hidden="true">
     <section class="modal" role="dialog" aria-modal="true" style="max-width: 440px;">
       <div class="modal-head" style="margin-bottom: 12px;"><div><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
       <form id="txModalForm" style="display: flex; flex-direction: column; gap: 12px;">
         
-        <!-- ELEMENT 1: CUSTOMER RECOGNITION SEARCH -->
         <div>
           <label style="font-weight: 700; margin-bottom: 4px;">Customer Name</label>
           <div style="position:relative; width:100%;">
-            <input type="text" id="txModalSearchCust" placeholder="🔍 Search name or number..." autocomplete="off" />
+            <input type="text" id="txModalSearchCust" placeholder="🔍 Type name or phone to filter..." autocomplete="off" />
             <div id="txModalSearchResults" class="dropdown-menu" style="width:100%; max-height:150px; overflow-y:auto; left:0; right:0; top:100%; box-shadow: var(--shadow); border-radius: 12px;"></div>
           </div>
           
@@ -279,23 +267,20 @@
           </div>
         </div>
 
-        <!-- ELEMENT 2: BINARY HIGHLIGHT TAPPING PILLS -->
         <div>
           <label style="font-weight: 700; margin-bottom: 6px;">Classification</label>
           <div class="tx-binary-toggle-container">
-            <button type="button" class="binary-pill-btn pill-debt active" data-type="DEBT">🔴 DEBIT (He Owes)</button>
-            <button type="button" class="binary-pill-btn pill-credit" data-type="CREDIT">🟢 CREDIT (Received)</button>
+            <button type="button" class="binary-pill-btn pill-debt active" data-type="DEBT">Debit (Red)</button>
+            <button type="button" class="binary-pill-btn pill-credit" data-type="CREDIT">Credit (Green)</button>
           </div>
           <input type="hidden" name="type" id="txModalTypeHidden" value="DEBT" />
         </div>
 
-        <!-- ELEMENT 3: AMOUNT -->
         <div>
           <label style="font-weight: 700; margin-bottom: 4px;">Amount (₹)</label>
-          <input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" style="font-size: 18px; font-weight: 700; padding: 10px;" required />
+          <input name="amount" id="txModalAmountField" type="number" min="0.01" step="0.01" placeholder="0.00" style="font-size: 18px; font-weight: 700; padding: 10px;" required />
         </div>
 
-        <!-- ELEMENT 4: META FIELDS -->
         <div class="form-row" style="grid-template-columns: 1fr 1fr; gap: 8px;">
           <div>
             <label style="font-weight: 700; margin-bottom: 4px;">Effective Date</label>
@@ -303,17 +288,15 @@
           </div>
           <div>
             <label style="font-weight: 700; margin-bottom: 4px;">Description</label>
-            <input name="description" id="txModalDesc" placeholder="Optional notes..." />
+            <input name="description" id="txModalDesc" placeholder="Optional details..." />
           </div>
         </div>
 
-        <!-- SAVE -->
         <button class="primary-button" type="submit" style="width: 100%; padding: 14px; font-size: 14px; margin-top: 4px; font-weight: 700;"><i class="ri-checkbox-circle-fill"></i> Save Entry</button>
       </form>
     </section>
   </div>
 
-  <!-- MODAL: INITIALIZE NEW CUSTOMER -->
   <div class="modal-backdrop" id="customerQuickModal" aria-hidden="true">
     <section class="modal" role="dialog" style="max-width:400px;">
       <div class="modal-head"><div><p class="eyebrow">DIRECTORY</p><h2>Initialize New Account</h2></div><button class="close-modal" id="custQuickCloseBtn">×</button></div>
@@ -323,7 +306,7 @@
         </button>
         
         <label>Customer Full Name<input name="name" id="quickCustNameField" placeholder="Ramesh Sharma" required /></label>
-        <label>WhatsApp Contact Number<div class="phone-input"><span>+91</span><input name="phone" inputmode="numeric" maxlength="10" placeholder="9876543210" required /></div></label>
+        <label>WhatsApp Contact Number<div class="phone-input"><span>+91</span><input name="phone" id="quickCustPhoneField" inputmode="numeric" maxlength="10" placeholder="9876543210" required /></div></label>
         <div class="modal-actions">
           <button type="button" class="cancel-button" id="custQuickCancelBtn">Cancel</button>
           <button class="primary-button" type="submit">Save Account</button>
@@ -332,7 +315,6 @@
     </section>
   </div>
 
-  <!-- MODAL: TEMPLATE WORKSPACE CUSTOMIZATION -->
   <div class="modal-backdrop" id="templateModal" aria-hidden="true">
     <section class="modal" role="dialog">
       <div class="modal-head"><div><p class="eyebrow">DASHBOARD</p><h2 id="templateModalTitle">Modify Template</h2></div><button class="close-modal" id="templateModalCloseBtn">×</button></div>
@@ -349,7 +331,6 @@
     </section>
   </div>
 
-  <!-- TOAST FEEDBACK MODULE -->
   <div class="toast" id="toast"><span>✓</span><div><strong id="toastTitle">Success</strong><p id="toastMessage">Done.</p></div></div>
   <script src="app.js"></script>
 </body>
