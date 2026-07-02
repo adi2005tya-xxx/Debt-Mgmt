@@ -23,7 +23,7 @@ const state = {
   activeTxModalTargetPhone: null
 };
 
-// --- MULTI-ACCOUNT ASYNCHRONOUS DATA GATEWAY (CLOUD ABSTRACT) ---
+// --- DB INTERFACE OVERLAY MATRIX SYSTEM ---
 const DB = {
   async saveCustomer(phone, payload) {
     state.customers[phone] = payload;
@@ -47,7 +47,7 @@ const DB = {
   }
 };
 
-// --- CORE COMPILER HELPERS ---
+// --- CORE UTILITY PROPS ---
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (val) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
@@ -362,7 +362,7 @@ function renderBusinessProfileView() {
 }
 
 // ============================================================================
-// --- MODAL TRIGGER CONTROL PATTERNS ---
+// --- GLOBAL EVENT CONTROLLERS ---
 // ============================================================================
 
 function openModal(modalId) {
@@ -388,35 +388,6 @@ function closeModal(modalId) {
     }
   }
 }
-
-function resetTxModal() {
-  $('#txModalForm').reset();
-  state.activeTxModalTargetPhone = null;
-  $('#txModalSearchCust').style.display = 'block';
-  $('#txModalSearchCust').value = '';
-  $('#txModalAccountStatus').style.display = 'none';
-  $('#txModalRecentContainer').style.display = 'none';
-  $('#txModalSearchResults').style.display = 'none';
-  $('#txModalSearchResults').innerHTML = '';
-  
-  $$('.binary-pill-btn').forEach(b => b.classList.remove('active'));
-  $('.binary-pill-btn.pill-debt').classList.add('active');
-  $('#txModalTypeHidden').value = 'DEBT';
-}
-
-function populateTxModalAccountSelection(phone) {
-  const cust = state.customers[phone];
-  if (!cust) return;
-  state.activeTxModalTargetPhone = phone;
-  $('#txModalSearchCust').style.display = 'none';
-  $('#txModalSearchResults').style.display = 'none';
-  $('#txModalAccountStatus').style.display = 'flex';
-  $('#txModalSelectedName').textContent = cust.name;
-}
-
-// ============================================================================
-// --- GLOBAL EVENT CONTROLLERS ---
-// ============================================================================
 
 function bindApplicationEvents() {
   // --- NAVIGATION DEEP DELEGATION ENGINE ---
@@ -523,37 +494,13 @@ function bindApplicationEvents() {
     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`, '_blank');
   });
 
-  $('#sendWhatsAppBtn').addEventListener('click', () => {
-    const phone = $('#recipientSelect').value;
-    if (!phone) return showToast('Error', 'No recipient selected.');
-    
-    const selectedTpl = state.templates.custom.find(t => t.id === state.templates.activeId) || state.templates.custom[0];
-    const message = compileMessageString(phone, selectedTpl.body);
-    
-    state.transactions.forEach(t => {
-      if (t.customerPhone === phone && t.date === TODAY) t.sent = true;
-    });
-    localStorage.setItem('kf_v2_transactions', JSON.stringify(state.transactions));
-    renderCurrentView();
-    
-    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`, '_blank');
-  });
-
   // --- TEMPLATE WORKSPACE DROPDOWNS & ACTIONS ---
-  $('#previewTemplateDropdownBtn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    $('#previewTemplateMenu').classList.toggle('show');
-  });
-
-  document.addEventListener('click', () => $('#previewTemplateMenu')?.classList.remove('show'));
-
   document.body.addEventListener('click', (e) => {
     const dropdownBtn = e.target.closest('.select-preview-template-btn');
     if (dropdownBtn) {
       state.templates.activeId = dropdownBtn.dataset.id;
       localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
       renderTemplatesWorkspaceView();
-      if ($('#recipientSelect').value) updateDashboardMessagePreview();
     }
 
     const defaultBtn = e.target.closest('.make-default-template-btn');
@@ -561,7 +508,7 @@ function bindApplicationEvents() {
       state.templates.activeId = defaultBtn.dataset.id;
       localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
       renderTemplatesWorkspaceView();
-      showToast('Template Updated', 'New system structural default initialized.');
+      showToast('Template Updated', 'New system default initialized.');
     }
   });
 
@@ -570,7 +517,7 @@ function bindApplicationEvents() {
     const delBtn = e.target.closest('.delete-tx-btn');
     if (delBtn) {
       const id = delBtn.dataset.id;
-      if (confirm('Are you certain you wish to purge this transaction record from local registers?')) {
+      if (confirm('Are you certain you wish to purge this transaction record from registers?')) {
         DB.purgeTransaction(id).then(() => {
           renderCurrentView();
           showToast('Purged', 'Ledger balances updated successfully.');
@@ -706,7 +653,7 @@ function bindApplicationEvents() {
     const name = fData.get('name').trim();
     let phone = fData.get('phone').replace(/\D/g, '');
 
-    if (phone.length !== 10) return alert('Enter a legal 10-digit primary mobile vector.');
+    if (phone.length !== 10) return alert('Enter a legal, structural 10-digit primary mobile vector.');
     if (state.customers[phone]) return alert('An account registry matching this phone number already exists.');
 
     DB.saveCustomer(phone, { name, phone }).then(() => {
@@ -760,7 +707,6 @@ function bindApplicationEvents() {
     localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
     closeModal('templateModal');
     renderTemplatesWorkspaceView();
-    if ($('#recipientSelect').value) updateDashboardMessagePreview();
     showToast('Saved Template', 'Workspace data changes compiled successfully.');
   });
 
@@ -770,7 +716,6 @@ function bindApplicationEvents() {
   $('#txSearchInput').addEventListener('input', () => renderTransactionsGlobalView());
   $('#txDateFilterInput').addEventListener('change', () => renderTransactionsGlobalView());
   $('#txTypeFilterSelect').addEventListener('change', () => renderTransactionsGlobalView());
-  $('#recipientSelect').addEventListener('change', () => updateDashboardMessagePreview());
 
   // --- PROFILE DATA SYNCHRONIZATION ---
   $('#businessPageForm').addEventListener('submit', (e) => {
