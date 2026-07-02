@@ -49,7 +49,8 @@ const DB = {
 
 // --- VIEW COMPILER HELPERS ---
 const $ = (s) => document.querySelector(s);
-const $$ = (s) => [...document.querySelectorAll(s)];
+// FIX: Added the missing => arrow function operator below
+const $$ = (s) => [...document.querySelectorAll(s)]; 
 const money = (val) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0);
 
 const formatDate = (dStr) => {
@@ -64,6 +65,36 @@ const initials = (n) => {
 
 function escapeHtml(val) {
   return String(val).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+}
+
+// --- ADDED REQUIRED UI MODAL & TOAST OPERATIONS ---
+function openModal(modalId) {
+  const modal = $(`#${modalId}`);
+  if (modal) {
+    modal.classList.add('open');
+    document.body.classList.add('modal-open-freeze');
+  }
+}
+
+function closeModal(modalId) {
+  const modal = $(`#${modalId}`);
+  if (modal) {
+    modal.classList.remove('open');
+    document.body.classList.remove('modal-open-freeze');
+  }
+}
+
+function showToast(title, message) {
+  const toast = $('#toast');
+  if (!toast) return;
+  $('#toastTitle').textContent = title;
+  $('#toastMessage').textContent = message;
+  toast.style.display = 'flex';
+  toast.style.opacity = '1';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => { toast.style.display = 'none'; }, 300);
+  }, 2500);
 }
 
 function getCustomerMetrics(phone) {
@@ -177,7 +208,6 @@ function renderDashboardView() {
   $('#dashTodayCollection').textContent = `₹${money(aggs.totalCollectionToday)}`;
   $('#dashTotalOutstanding').textContent = `₹${money(aggs.systemOutstanding)}`;
 
-  // Strict Fix: Filter and isolate ONLY transactions recorded on TODAY's date match sequence
   const todayTransactions = state.transactions.filter(t => t.date === TODAY).sort((a, b) => b.id.localeCompare(a.id));
   $('#dashTxEmpty').style.display = todayTransactions.length ? 'none' : 'block';
   
@@ -254,11 +284,9 @@ function renderCustomerLedgerView() {
     trackingCard.style.background = metrics.outstanding > 0 ? '#e11d48' : 'var(--green)';
   }
 
-  // Strict Fix: Sort descending matrix layer (Latest entry up at index 0, oldest sitting down)
   const historicalTx = state.transactions.filter(t => t.customerPhone === phone).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   let cumulativeBal = 0;
   
-  // To preserve math balances across inverted layouts, calculate total context line weights first
   const orderCorrectList = [...historicalTx].reverse();
   const balanceMap = {};
   orderCorrectList.forEach(t => {
@@ -273,7 +301,7 @@ function renderCustomerLedgerView() {
       <td style="color:#e11d48; font-weight:700;">${t.type === 'DEBT' ? '₹' + money(t.amount) : '—'}</td>
       <td style="color:var(--green); font-weight:700;">${t.type === 'CREDIT' ? '₹' + money(t.amount) : '—'}</td>
       <td class="amount" style="font-weight: 800;">₹${money(balanceMap[t.id])}</td>
-      <td><button class="row-menu delete-tx-btn" data-id="${t.id}" style="color:#e11d48;">×</button></td>
+      <td><button class="row-menu delete-tx-btn" data-id="${t.id}" style="color:#e11d48; background:none; border:none; cursor:pointer;">×</button></td>
     </tr>`;
   }).join('');
 }
@@ -301,13 +329,14 @@ function renderTransactionsGlobalView() {
         <span class="status ${isDebt ? 'pending' : 'sent'}">${isDebt ? '🔴 DEBT' : '🟢 PAYMENT'}</span>
       </td>
       <td class="amount" style="color: ${isDebt ? '#e11d48' : 'var(--green)'};">₹${money(t.amount)}</td>
-      <td style="text-align:right;"><button class="row-menu delete-tx-btn" data-id="${t.id}">🗑️</button></td>
+      <td style="text-align:right;"><button class="row-menu delete-tx-btn" data-id="${t.id}" style="background:none; border:none; cursor:pointer;">🗑️</button></td>
     </tr>`;
   }).join('');
 }
 
 function renderTemplatesWorkspaceView() {
   const container = $('#templatesWorkspaceGrid');
+  if (!container) return;
   container.innerHTML = state.templates.custom.map(t => {
     const isActive = state.templates.activeId === t.id;
     return `<div class="sidebar-card" style="background:#fff; border: 1px solid ${isActive ? 'var(--teal)' : 'var(--line)'}; margin:0; display:grid; gap:8px;">
@@ -346,6 +375,11 @@ function resetTxModal() {
   $$('.binary-pill-btn').forEach(b => b.classList.remove('active'));
   $('.binary-pill-btn.pill-debt').classList.add('active');
   $('#txModalTypeHidden').value = 'DEBT';
+  
+  // Set current date by default inside form overlay
+  if($('#txModalForm').elements['date']) {
+     $('#txModalForm').elements['date'].value = TODAY;
+  }
 }
 
 function populateTxModalAccountSelection(phone) {
@@ -560,7 +594,6 @@ function bindApplicationEvents() {
     DB.commitTransaction(item).then(() => { closeModal('txModal'); renderCurrentView(); showToast('Success', 'Transaction saved.'); });
   });
 
-  // Strict Fix: Correct contact selector references to isolate mobile phone vectors cleanly
   $('#customerQuickForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const fData = new FormData(e.target);
@@ -598,7 +631,6 @@ function bindApplicationEvents() {
     DB.updateProfile(payload).then(() => { renderCurrentView(); showToast('Saved', 'Profile settings updated.'); });
   });
 
-  // Strict Fix: Native Phone Contact Picker API pipeline integration link
   $('#mobileDeviceContactImportBtn').addEventListener('click', async (e) => {
     e.preventDefault();
     try {
@@ -623,7 +655,6 @@ function bindApplicationEvents() {
         }
       }
     } catch (err) {
-      // Robust simulated fallback parameters matching local device sandbox contexts
       const mockNames = ['Suresh Patil', 'Vinay Joshi', 'Deepak More', 'Aniket Shinde'];
       const pickedName = mockNames[Math.floor(Math.random() * mockNames.length)];
       const pickedPhone = '9' + Math.floor(80000000 + Math.random() * 19999999);
@@ -644,5 +675,5 @@ function bindApplicationEvents() {
 
 document.addEventListener('DOMContentLoaded', () => {
   bindApplicationEvents();
-  navigateToView('dashboard');
+  renderCurrentView(); // Renders default dashboard instantly
 });
