@@ -331,6 +331,7 @@ function openModal(modalId) {
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open-freeze');
+    document.documentElement.classList.add('modal-open-freeze');
     setTimeout(() => {
       const firstInput = modal.querySelector('input:not([type="hidden"])');
       if (firstInput) firstInput.focus();
@@ -344,6 +345,7 @@ function closeModal(modalId) {
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open-freeze');
+    document.documentElement.classList.remove('modal-open-freeze');
   }
 }
 
@@ -372,19 +374,17 @@ function populateTxModalAccountSelection(phone) {
 }
 
 // ============================================================================
-// --- DETACHED CLEAN REGISTRATION LISTENERS BLOCK ---
+// --- EVENT REGISTRATION ATTACHMENT CORE ---
 // ============================================================================
 function bindApplicationEvents() {
   
-  // 1. Navigation View Selection Triggers
-  $('#desktopNavContainer').addEventListener('click', (e) => {
-    const btn = e.target.closest('.nav-item');
-    if (btn && btn.dataset.view) navigateToView(btn.dataset.view);
-  });
-
-  $('#mobileNavContainer').addEventListener('click', (e) => {
-    const btn = e.target.closest('.mobile-nav-item');
-    if (btn && btn.dataset.view) navigateToView(btn.dataset.view);
+  // 1. Sidebar & Mobile Deck Menu Switch Routing Links
+  document.body.addEventListener('click', (e) => {
+    const navBtn = e.target.closest('.nav-item, .mobile-nav-item');
+    if (navBtn && navBtn.getAttribute('data-view')) {
+      e.preventDefault();
+      navigateToView(navBtn.getAttribute('data-view'));
+    }
   });
 
   $('#navBrand').addEventListener('click', (e) => { e.preventDefault(); navigateToView('dashboard'); });
@@ -392,7 +392,7 @@ function bindApplicationEvents() {
   $('#dashViewAllTxBtn').addEventListener('click', () => navigateToView('transactions'));
   $('#ledgerBackBtn').addEventListener('click', () => navigateToView('customers'));
 
-  // 2. Customer Ledger View Selection
+  // 2. Customer Registry Matrix Navigation Drilldown Links
   document.body.addEventListener('click', (e) => {
     const btn = e.target.closest('.view-ledger-btn');
     if (btn && btn.dataset.phone) {
@@ -401,7 +401,7 @@ function bindApplicationEvents() {
     }
   });
 
-  // 3. Ledger View Communication Channels
+  // 3. Communications Channels Launch Triggers
   document.body.addEventListener('click', (e) => {
     const waLedgerBtn = e.target.closest('#ledgerWaBtn');
     if (waLedgerBtn) {
@@ -413,7 +413,7 @@ function bindApplicationEvents() {
     }
   });
 
-  // 4. Color Coded Highlight High-Speed Binary Switches
+  // 4. Binary Type Selector Highlight System
   document.body.addEventListener('click', (e) => {
     const pillBtn = e.target.closest('.binary-pill-btn');
     if (pillBtn) {
@@ -424,7 +424,7 @@ function bindApplicationEvents() {
     }
   });
 
-  // 5. CSV Statement Generations
+  // 5. Section Specific Data CSV Spreadsheet Downloader Engine
   $('#txSectionDownloadBtn').addEventListener('click', () => {
     const query = $('#txSearchInput').value.toLowerCase().trim();
     const dateF = $('#txDateFilterInput').value;
@@ -450,7 +450,7 @@ function bindApplicationEvents() {
     link.click();
   });
 
-  // 6. Direct WhatsApp Instant Row Pushes
+  // 6. Direct WhatsApp Row Dispatch Shortcut Buttons
   document.body.addEventListener('click', (e) => {
     const btn = e.target.closest('.quick-row-send-btn');
     if (!btn) return;
@@ -467,23 +467,78 @@ function bindApplicationEvents() {
     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`, '_blank');
   });
 
-  // 7. Modals Control Framework Switches
-  $('#globalAddTxBtn').addEventListener('click', () => { resetTxModal(); openModal('txModal'); });
-  $('#ledgerAddDebtBtn').addEventListener('click', () => { resetTxModal(); $('#txModalTitle').textContent = 'Add Debt (+)'; populateTxModalAccountSelection(state.selectedLedgerCustomerPhone); openModal('txModal'); });
-  $('#ledgerAddPaymentBtn').addEventListener('click', () => { resetTxModal(); $('#txModalTitle').textContent = 'Add Payment (-)'; $$('.binary-pill-btn').forEach(b => b.classList.remove('active')); $('.binary-pill-btn.pill-credit').classList.add('active'); $('#txModalTypeHidden').value = 'CREDIT'; populateTxModalAccountSelection(state.selectedLedgerCustomerPhone); openModal('txModal'); });
-  
-  $('#txModalCloseBtn').addEventListener('click', () => closeModal('txModal'));
-  $('#txModalCancelBtn').addEventListener('click', () => closeModal('txModal'));
-  $('#txModalClearCustBtn').addEventListener('click', () => resetTxModal());
+  // 7. Modals Control Operations Switch Matrix Layouts
+  document.body.addEventListener('click', (e) => {
+    const targetId = e.target.id;
+    
+    if (targetId === 'globalAddTxBtn') {
+      resetTxModal();
+      openModal('txModal');
+    } else if (targetId === 'createCustomerQuickBtn') {
+      $('#customerQuickForm').reset();
+      openModal('customerQuickModal');
+    } else if (targetId === 'templateCreateBtn') {
+      const form = $('#templateModalForm');
+      form.reset();
+      form.elements['id'].value = 'tpl_' + Date.now();
+      $('#templateModalTitle').textContent = 'Create Custom Template';
+      openModal('templateModal');
+    } else if (targetId === 'ledgerAddDebtBtn') {
+      resetTxModal();
+      $('#txModalTitle').textContent = 'Add Debt (+)';
+      populateTxModalAccountSelection(state.selectedLedgerCustomerPhone);
+      openModal('txModal');
+    } else if (targetId === 'ledgerAddPaymentBtn') {
+      resetTxModal();
+      $('#txModalTitle').textContent = 'Add Payment (-)';
+      $$('.binary-pill-btn').forEach(b => b.classList.remove('active'));
+      $('.binary-pill-btn.pill-credit').classList.add('active');
+      $('#txModalTypeHidden').value = 'CREDIT';
+      populateTxModalAccountSelection(state.selectedLedgerCustomerPhone);
+      openModal('txModal');
+    }
+  });
 
-  // 8. Predictive Autocomplete Filter Input
+  // 8. Modals Closing Interactions Dismissals
+  document.body.addEventListener('click', (e) => {
+    if (e.target.closest('#txModalCloseBtn') || e.target.closest('#txModalCancelBtn')) closeModal('txModal');
+    if (e.target.closest('#custQuickCloseBtn') || e.target.closest('#custQuickCancelBtn')) closeModal('customerQuickModal');
+    if (e.target.closest('#templateModalCloseBtn') || e.target.closest('#templateModalCancelBtn')) closeModal('templateModal');
+    if (e.target.closest('#txModalClearCustBtn')) resetTxModal();
+  });
+
+  // 9. Template Customization Actions Delegation Rules
+  document.body.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.edit-template-btn');
+    if (editBtn) {
+      const tId = editBtn.dataset.id;
+      const tpl = state.templates.custom.find(x => x.id === tId);
+      if (tpl) {
+        const form = $('#templateModalForm');
+        form.elements['id'].value = tpl.id;
+        form.elements['title'].value = tpl.title;
+        form.elements['body'].value = tpl.body;
+        openModal('templateModal');
+      }
+    }
+
+    const defaultBtn = e.target.closest('.make-default-template-btn');
+    if (defaultBtn) {
+      state.templates.activeId = defaultBtn.dataset.id;
+      localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
+      renderTemplatesWorkspaceView();
+      showToast('Template Updated', 'New system default initialized.');
+    }
+  });
+
+  // 10. Predictive Lookup Filtering Engine
   $('#txModalSearchCust').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase().trim();
     const resultsPanel = $('#txModalSearchResults');
     if (!q) { resultsPanel.style.display = 'none'; return; }
 
     const filtered = Object.values(state.customers).filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q));
-    if (filtered.length === 0) { resultsPanel.style.display = 'block'; resultsPanel.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--muted);">No matches</div>'; return; }
+    if (filtered.length === 0) { resultsPanel.style.display = 'block'; resultsPanel.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--muted);">No matches found</div>'; return; }
 
     resultsPanel.style.display = 'block';
     resultsPanel.innerHTML = filtered.map(c => `<button type="button" class="dropdown-item search-autocomplete-row-btn" data-phone="${c.phone}"><b>${escapeHtml(c.name)}</b> (+91 ${c.phone})</button>`).join('');
@@ -492,6 +547,8 @@ function bindApplicationEvents() {
   document.body.addEventListener('click', (e) => {
     const rowBtn = e.target.closest('.search-autocomplete-row-btn');
     if (rowBtn && rowBtn.dataset.phone) populateTxModalAccountSelection(rowBtn.dataset.phone);
+    const badge = e.target.closest('.tx-badge-select-btn');
+    if (badge) populateTxModalAccountSelection(badge.dataset.phone);
   });
 
   document.addEventListener('click', (e) => {
@@ -500,7 +557,7 @@ function bindApplicationEvents() {
     }
   });
 
-  // 9. Form Submission Pipeline Commits
+  // 11. Pipeline Forms Submissions Routing
   $('#txModalForm').addEventListener('submit', (e) => {
     e.preventDefault();
     if (!state.activeTxModalTargetPhone) return alert('Select a customer profile first.');
@@ -518,18 +575,34 @@ function bindApplicationEvents() {
     DB.commitTransaction(item).then(() => { closeModal('txModal'); renderCurrentView(); showToast('Success', 'Transaction saved.'); });
   });
 
-  $('#createCustomerQuickBtn').addEventListener('click', () => { $('#customerQuickForm').reset(); openModal('customerQuickModal'); });
-  $('#custQuickCloseBtn').addEventListener('click', () => closeModal('customerQuickModal'));
-  $('#custQuickCancelBtn').addEventListener('click', () => closeModal('customerQuickModal'));
-
   $('#customerQuickForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const fData = new FormData(e.target);
     const name = fData.get('name').trim();
     const phone = fData.get('phone').replace(/\D/g, '');
 
-    if (phone.length !== 10) return alert('Enter a legal 10-digit primary mobile string.');
+    if (phone.length !== 10) return alert('Enter a valid 10-digit primary mobile string.');
     DB.saveCustomer(phone, { name, phone }).then(() => { closeModal('customerQuickModal'); renderCurrentView(); showToast('Created', `${name} added.`); });
+  });
+
+  $('#templateModalForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fData = new FormData(e.target);
+    const id = fData.get('id');
+    const title = fData.get('title').trim();
+    const body = fData.get('body').trim();
+
+    const existingIdx = state.templates.custom.findIndex(x => x.id === id);
+    if (existingIdx !== -1) {
+      state.templates.custom[existingIdx] = { id, title, body };
+    } else {
+      state.templates.custom.push({ id, title, body });
+    }
+
+    localStorage.setItem('kf_v2_templates', JSON.stringify(state.templates));
+    closeModal('templateModal');
+    renderTemplatesWorkspaceView();
+    showToast('Saved Template', 'Workspace template synced successfully.');
   });
 
   $('#businessPageForm').addEventListener('submit', (e) => {
@@ -539,6 +612,7 @@ function bindApplicationEvents() {
     DB.updateProfile(payload).then(() => { renderCurrentView(); showToast('Saved', 'Profile settings updated.'); });
   });
 
+  // 12. Realtime Filters Pipelines
   $('#custSearchInput').addEventListener('input', () => renderCustomersView());
   $('#custSortSelect').addEventListener('change', () => renderCustomersView());
   $('#txSearchInput').addEventListener('input', () => renderTransactionsGlobalView());
