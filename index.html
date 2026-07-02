@@ -82,7 +82,7 @@
           </article>
         </section>
 
-        <section class="workspace-grid">
+        <section class="workspace-grid" style="grid-template-columns: 1fr;">
           <article class="panel">
             <div class="panel-header">
               <div><h2>Recent Activity</h2><p>Latest ledger movements</p></div>
@@ -106,30 +106,6 @@
               </div>
             </div>
           </article>
-
-          <aside class="panel send-panel">
-            <div class="send-header">
-              <div class="whatsapp-logo"><i class="ri-whatsapp-fill"></i></div>
-              <div><h2>WhatsApp Dispatcher</h2><p id="readyCount">0 active today</p></div>
-            </div>
-            <div class="message-preview">
-              <div class="preview-label">
-                <span>MESSAGE PREVIEW</span>
-                <div style="position:relative;">
-                  <button type="button" id="previewTemplateDropdownBtn" class="text-button" style="margin:0; font-size:11px;">Template <i class="ri-arrow-down-s-line"></i></button>
-                  <div class="dropdown-menu" id="previewTemplateMenu"></div>
-                </div>
-              </div>
-              <div class="bubble chat-bubble-native" id="messagePreview">Select a customer below to review message string.</div>
-            </div>
-            <div class="upi-ready"><i class="ri-qr-code-line"></i><div><strong>Payment link status</strong><p id="upiStatusText">UPI ready</p></div></div>
-            <label class="select-label" for="recipientSelect">RECIPIENT</label>
-            <div class="select-wrap">
-              <span class="recipient-avatar" id="recipientAvatar">—</span>
-              <select id="recipientSelect"></select>
-            </div>
-            <button class="whatsapp-button" id="sendWhatsAppBtn"><i class="ri-whatsapp-line"></i> Launch WhatsApp Link</button>
-          </aside>
         </section>
       </div>
 
@@ -206,7 +182,7 @@
         </article>
       </div>
 
-      <!-- VIEW: HISTORICAL LOGS & SECTION EXPORTS -->
+      <!-- VIEW: HISTORICAL LOGS -->
       <div id="view-transactions" class="app-view">
         <article class="panel">
           <div class="panel-header filters-header">
@@ -219,7 +195,6 @@
                 <option value="DEBT">🔴 Debts Only</option>
                 <option value="CREDIT">🟢 Payments Only</option>
               </select>
-              <!-- STATEMENT DOWNLOAD EMPOWERMENT BUTTON -->
               <button class="secondary-button" id="txSectionDownloadBtn" style="background: var(--paper); border: 1px solid #dfe4e2; font-weight: 700;"><i class="ri-download-cloud-2-line"></i> Export CSV</button>
             </div>
           </div>
@@ -284,17 +259,17 @@
     </main>
   </div>
 
-  <!-- MODAL: HYPER-SIMPLIFIED ENTRY DIALOG LAYER -->
+  <!-- MODAL: HIGH-SPEED SIMPLIFIED TRANSACTION ENTRY FORM -->
   <div class="modal-backdrop" id="txModal" aria-hidden="true">
     <section class="modal" role="dialog" aria-modal="true" style="max-width: 440px;">
       <div class="modal-head" style="margin-bottom: 12px;"><div><h2 id="txModalTitle">Add Entry</h2></div><button class="close-modal" id="txModalCloseBtn">×</button></div>
       <form id="txModalForm" style="display: flex; flex-direction: column; gap: 12px;">
         
-        <!-- ROW 1: ACCOUNT LOCATOR -->
+        <!-- ELEMENT 1: CUSTOMER RECOGNITION SEARCH -->
         <div>
           <label style="font-weight: 700; margin-bottom: 4px;">Customer Name</label>
           <div style="position:relative; width:100%;">
-            <input type="text" id="txModalSearchCust" placeholder="🔍 Search by name or phone..." autocomplete="off" />
+            <input type="text" id="txModalSearchCust" placeholder="🔍 Search name or number..." autocomplete="off" />
             <div id="txModalSearchResults" class="dropdown-menu" style="width:100%; max-height:150px; overflow-y:auto; left:0; right:0; top:100%; box-shadow: var(--shadow); border-radius: 12px;"></div>
           </div>
           
@@ -304,24 +279,23 @@
           </div>
         </div>
 
-        <!-- ROW 2: CLASSIFICATION PILL SWITCHER -->
+        <!-- ELEMENT 2: BINARY HIGHLIGHT TAPPING PILLS -->
         <div>
           <label style="font-weight: 700; margin-bottom: 6px;">Classification</label>
           <div class="tx-binary-toggle-container">
             <button type="button" class="binary-pill-btn pill-debt active" data-type="DEBT">🔴 DEBIT (He Owes)</button>
             <button type="button" class="binary-pill-btn pill-credit" data-type="CREDIT">🟢 CREDIT (Received)</button>
           </div>
-          <!-- Internal tracking state vector pointer -->
           <input type="hidden" name="type" id="txModalTypeHidden" value="DEBT" />
         </div>
 
-        <!-- ROW 3: CASH VALUE ENTRY -->
+        <!-- ELEMENT 3: AMOUNT -->
         <div>
           <label style="font-weight: 700; margin-bottom: 4px;">Amount (₹)</label>
           <input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" style="font-size: 18px; font-weight: 700; padding: 10px;" required />
         </div>
 
-        <!-- ROW 4: CONTEXT INFORMATION META -->
+        <!-- ELEMENT 4: META FIELDS -->
         <div class="form-row" style="grid-template-columns: 1fr 1fr; gap: 8px;">
           <div>
             <label style="font-weight: 700; margin-bottom: 4px;">Effective Date</label>
@@ -329,11 +303,11 @@
           </div>
           <div>
             <label style="font-weight: 700; margin-bottom: 4px;">Description</label>
-            <input name="description" id="txModalDesc" placeholder="Poha, Rice, Milk etc." />
+            <input name="description" id="txModalDesc" placeholder="Optional notes..." />
           </div>
         </div>
 
-        <!-- ROW 5: TRIGGER ACTION COMMIT -->
+        <!-- SAVE -->
         <button class="primary-button" type="submit" style="width: 100%; padding: 14px; font-size: 14px; margin-top: 4px; font-weight: 700;"><i class="ri-checkbox-circle-fill"></i> Save Entry</button>
       </form>
     </section>
